@@ -32,13 +32,14 @@ Not allowed here:
 - storage implementations
 - product orchestration
 
-## Initial migration target
+## Migration history
 
-The first migration target is the current Hawk package:
+The legacy `github.com/GrayCodeAI/hawk/shared/types` package has been removed.
+Severity, findings, and the packages below are the supported cross-repo API.
 
-- `github.com/GrayCodeAI/hawk/shared/types`
-
-That package currently exports severity and finding models for cross-repo use. Those definitions should move here so support repos stop depending on the Hawk product repo for shared contracts.
+Engines should depend on this repo only when they produce or consume a shared
+contract. Contract-free engines (for example `eyrie`, `yaad`, `trace`) should
+not add the dependency just for consistency.
 
 ## Package map
 
