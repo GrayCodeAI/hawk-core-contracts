@@ -1,0 +1,10 @@
+# Build / tooling caches
+.gocache/
+coverage.out
+
+# Go workspace (local dev only)
+go.work
+go.work.sum
+
+# macOS
+.DS_Store
