@@ -51,6 +51,14 @@ type ConfidenceBreakdown struct {
 	Low    []Finding `json:"low"`
 }
 
+// SASTFusionResult tracks how the LLM handled SAST findings during a review.
+// Only populated when SAST-LLM fusion is active (preAnalysis enabled).
+type SASTFusionResult struct {
+	Confirmed   []Finding `json:"confirmed"`
+	Dismissed   []Finding `json:"dismissed"`
+	Unaddressed []Finding `json:"unaddressed"`
+}
+
 // Result is the neutral review result contract.
 type Result struct {
 	Findings            []Finding            `json:"findings"`
@@ -58,6 +66,7 @@ type Result struct {
 	Stats               Stats                `json:"stats"`
 	Report              string               `json:"report"`
 	FailOn              contracts.Severity   `json:"fail_on"`
+	SASTFusion          *SASTFusionResult    `json:"sast_fusion,omitempty"`
 	ConfidenceBreakdown *ConfidenceBreakdown `json:"confidence_breakdown,omitempty"`
 }
 
