@@ -1,3 +1,3 @@
 module github.com/GrayCodeAI/hawk-core-contracts
 
-go 1.26
+go 1.26.4
