@@ -1,0 +1,17 @@
+# CODEOWNERS for hawk-core-contracts (shared cross-repo types)
+* @GrayCodeAI/maintainers
+
+# Contract packages — changes here affect downstream consumers
+/types/          @GrayCodeAI/core-team
+/review/         @GrayCodeAI/core-team
+/verify/         @GrayCodeAI/core-team
+/events/         @GrayCodeAI/core-team
+/policy/         @GrayCodeAI/core-team
+/tools/          @GrayCodeAI/core-team
+
+# CI / build tooling
+/.github/        @GrayCodeAI/devops-team
+/lefthook.yml    @GrayCodeAI/devops-team
+
+# Documentation
+*.md             @GrayCodeAI/docs-team
