@@ -1,0 +1,19 @@
+# CODEOWNERS for hawk-core-contracts (shared cross-repo contract types)
+* @GrayCodeAI/maintainers
+
+# Contract packages — additive-only, cross-repo API surface
+/types/    @GrayCodeAI/llm-team
+/tools/    @GrayCodeAI/llm-team
+/events/   @GrayCodeAI/llm-team
+/policy/   @GrayCodeAI/llm-team
+/review/   @GrayCodeAI/llm-team
+/verify/   @GrayCodeAI/llm-team
+/sessions/ @GrayCodeAI/llm-team
+/VERSION   @GrayCodeAI/maintainers
+
+# CI / release
+/.github/  @GrayCodeAI/devops-team
+/Makefile  @GrayCodeAI/devops-team
+
+# Documentation
+*.md       @GrayCodeAI/docs-team

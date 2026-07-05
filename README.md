@@ -67,3 +67,23 @@ Completed:
 - avoid product-specific runtime assumptions
 - do not move Hawk orchestration code here
 - if a type is only used inside one repo, it should stay in that repo
+
+## Ecosystem Boundaries
+
+`hawk-core-contracts` is a **foundation repo** in the [hawk ecosystem](https://github.com/GrayCodeAI/hawk/blob/main/docs/architecture/hawk-ecosystem-summary.md) —
+it sits below every engine and below `hawk` itself, alongside
+`hawk-mcpkit`.
+
+Rules that keep it there:
+
+- **Zero hawk-eco dependencies.** This repo must never import `hawk`, any
+  engine (`eyrie`, `yaad`, `tok`, `trace`, `sight`, `inspect`), any SDK, or
+  `hawk-mcpkit`. Only the Go standard library. `make boundaries` (also run
+  in CI) enforces this with `scripts/check-ecosystem-boundaries.sh`.
+- **Implementation-free.** See Scope above — no CLI code, provider
+  implementations, runtime logic, storage, or orchestration.
+- **Consumers, not dependents.** `hawk` and engines import this repo when
+  they share a real cross-repo contract; it never imports them back.
+
+If a change here would require importing anything outside the standard
+library, that type does not belong in this repo.
