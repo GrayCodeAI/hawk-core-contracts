@@ -1,85 +1,108 @@
 # hawk-core-contracts
 
-Shared contracts for the Hawk ecosystem.
+Shared contracts for the hawk ecosystem.
 
-This repo exists to hold stable cross-repo definitions used by:
+This repo holds stable cross-repo type definitions used by every engine and
+`hawk` itself: severity levels, findings, tool contracts, event models, policy
+verdicts, review results, verification reports, and agent session state.
 
-- `hawk`
-- `eyrie`
-- `yaad`
-- `tok`
-- `trace`
-- `sight`
-- `inspect`
-- Hawk SDKs and extension surfaces where needed
+**Tagline:** Shared contracts for the hawk ecosystem.
+
+## Install
+
+```sh
+go get github.com/GrayCodeAI/hawk-core-contracts
+```
+
+## Quick Reference
+
+| Package | Key Types | Purpose |
+|---------|-----------|---------|
+| `types/` | `Severity`, `Finding`, `FindingSlice`, `ParseSeverity` | Severity levels, findings, shared result vocabulary |
+| `tools/` | `ToolCall`, `ToolResult` | Provider-neutral tool call and result contracts |
+| `events/` | `ToolEvent`, `TraceEvent`, `UsageInfo` | Normalized tool and trace event contracts |
+| `policy/` | `Risk`, `PermissionVerdict`, `Allow`, `Deny` | Risk, permission verdict, guardian decision, approval request contracts |
+| `review/` | `Result`, `Finding`, `Comment` | Neutral review findings, comments, stats, and result contracts |
+| `verify/` | `Report`, `Finding` | Neutral verification findings, stats, and report contracts |
+| `sessions/` | `Phase`, `CostAccumulator`, `ParsePhase` | Cross-repo agent session state types |
+
+## Architecture
+
+```
+hawk-core-contracts (stdlib only)
+├── types/     Severity, Finding, FindingSlice — the core vocabulary
+├── tools/     ToolCall, ToolResult — provider-neutral tool contracts
+├── events/    ToolEvent, TraceEvent — normalized event contracts
+├── policy/    Risk, PermissionVerdict — governance contracts
+├── review/    Result, Finding, Comment — review result contracts
+├── verify/    Report, Finding — verification report contracts
+└── sessions/  Phase, CostAccumulator — session state contracts
+```
 
 ## Scope
 
-Allowed here:
+### Allowed here
 
-- shared enums
-- shared structs
-- event models
-- finding/result models
+- shared enums (severity levels, risk levels, phases)
+- shared structs (findings, tool calls, events, verdicts, reports)
+- event models (tool events, trace events, usage info)
+- finding/result models (severity, confidence, status)
 - engine request/response contracts
 - policy and tool contracts
 
-Not allowed here:
+### Not allowed here
 
-- CLI code
+- CLI code (commands, flags, shell output)
 - provider implementations
 - runtime logic
 - storage implementations
 - product orchestration
-
-## Migration history
-
-The legacy `github.com/GrayCodeAI/hawk/shared/types` package has been removed.
-Severity, findings, and the packages below are the supported cross-repo API.
+- anything that belongs in a single consuming repo
 
 Engines should depend on this repo only when they produce or consume a shared
-contract. Contract-free engines (for example `eyrie`, `yaad`, `trace`) should
-not add the dependency just for consistency.
+cross-repo contract. Contract-free engines (e.g., `eyrie`, `yaad`, `trace`)
+should not add the dependency just for consistency.
 
-## Package map
+If a type is only used inside one repo, it should stay in that repo.
 
-- `types/` - severity, findings, and shared result vocabulary
-- `tools/` - provider-neutral tool call and tool result contracts
-- `events/` - normalized tool and trace event contracts
-- `policy/` - risk, permission verdict, guardian decision, approval request contracts
-- `review/` - neutral review findings, comments, stats, and result contracts
-- `verify/` - neutral verification findings, stats, and report contracts
+## Migration History
 
-## Current status
+The legacy `github.com/GrayCodeAI/hawk/shared/types` package has been removed.
+All shared finding and severity definitions now live here. Migration is
+complete:
 
-Completed:
-
-1. shared finding and severity definitions moved here
+1. Severity and finding definitions migrated from `hawk/shared/types`
 2. `sight` and `inspect` migrated to import this repo
-3. Hawk docs and READMEs updated
-4. tool, event, and policy contracts added
-5. review and verification result contracts added
+3. Tool, event, and policy contracts added
+4. Review and verification result contracts added
+5. Sessions package added for cross-repo session state
 
-## Governance rules
+## Ecosystem
 
-- keep this repo implementation-free
-- prefer additive changes
-- avoid product-specific runtime assumptions
-- do not move Hawk orchestration code here
-- if a type is only used inside one repo, it should stay in that repo
+hawk-core-contracts is a **foundation repo** in the hawk-eco mono-ecosystem:
+
+| Component | Purpose |
+|-----------|---------|
+| **hawk-core-contracts** | Shared cross-repo contracts (this repo) |
+| **hawk-mcpkit** | Shared MCP server scaffolding |
+| **eyrie** | LLM provider runtime — routing, streaming, retries, caching |
+| **yaad** | Graph-based persistent memory for coding agents |
+| **tok** | Tokenizer, compression, secrets scanning, rate limiting |
+| **sight** | Diff-based code review and static analysis |
+| **inspect** | Security audit library (CVE, API security, CI output) |
+| **trace** | Session capture and replay CLI |
+| **hawk** | AI coding agent (this repo) |
+
+`hawk` and all engines import `hawk-core-contracts` when they share a real
+cross-repo contract; the repo itself never imports back.
 
 ## Ecosystem Boundaries
 
-`hawk-core-contracts` is a **foundation repo** in the [hawk ecosystem](https://github.com/GrayCodeAI/hawk/blob/main/docs/architecture/hawk-ecosystem-summary.md) —
-it sits below every engine and below `hawk` itself, alongside
-`hawk-mcpkit`.
+Rules that keep this repo at the foundation layer:
 
-Rules that keep it there:
-
-- **Zero hawk-eco dependencies.** This repo must never import `hawk`, any
-  engine (`eyrie`, `yaad`, `tok`, `trace`, `sight`, `inspect`), any SDK, or
-  `hawk-mcpkit`. Only the Go standard library. `make boundaries` (also run
-  in CI) enforces this with `scripts/check-ecosystem-boundaries.sh`.
+- **Zero hawk-eco dependencies.** This repo imports only the Go standard
+  library. `make boundaries` (also run in CI) enforces this with
+  `scripts/check-ecosystem-boundaries.sh`.
 - **Implementation-free.** See Scope above — no CLI code, provider
   implementations, runtime logic, storage, or orchestration.
 - **Consumers, not dependents.** `hawk` and engines import this repo when
@@ -87,3 +110,23 @@ Rules that keep it there:
 
 If a change here would require importing anything outside the standard
 library, that type does not belong in this repo.
+
+## Package Ownership
+
+| Path | Team |
+|------|------|
+| `/types/` | `@GrayCodeAI/llm-team` |
+| `/tools/` | `@GrayCodeAI/llm-team` |
+| `/events/` | `@GrayCodeAI/llm-team` |
+| `/policy/` | `@GrayCodeAI/llm-team` |
+| `/review/` | `@GrayCodeAI/llm-team` |
+| `/verify/` | `@GrayCodeAI/llm-team` |
+| `/sessions/` | `@GrayCodeAI/llm-team` |
+| `/VERSION` | `@GrayCodeAI/maintainers` |
+| `/Makefile` | `@GrayCodeAI/devops-team` |
+| `/*.md` | `@GrayCodeAI/docs-team` |
+| `/.github/` | `@GrayCodeAI/devops-team` |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
