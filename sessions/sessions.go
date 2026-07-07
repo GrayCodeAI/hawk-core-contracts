@@ -105,10 +105,10 @@ type PhaseUsage struct {
 // pipeline phases within a session. It is the single source of truth for
 // the cost-per-resolution metric exposed by hawk's ResolutionPipeline.
 type CostAccumulator struct {
-	SessionID    SessionID             `json:"session_id"`
-	ByPhase      map[Phase]PhaseUsage  `json:"by_phase"`
-	TotalTokens  int                   `json:"total_tokens"`
-	TotalCostUSD float64               `json:"total_cost_usd"`
+	SessionID    SessionID            `json:"session_id"`
+	ByPhase      map[Phase]PhaseUsage `json:"by_phase"`
+	TotalTokens  int                  `json:"total_tokens"`
+	TotalCostUSD float64              `json:"total_cost_usd"`
 }
 
 // NewCostAccumulator returns a zero-value CostAccumulator for the given session.
