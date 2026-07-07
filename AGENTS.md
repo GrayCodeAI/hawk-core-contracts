@@ -1,217 +1,168 @@
-# AGENTS.md — hawk-core-contracts
-
-This file describes the hawk-core-contracts project for AI agents working in
-this codebase. The TUI `/memory` command references this file.
-
+---
+description: Extending hawk-eco — how to write AGENTS.md files, custom specialists, skills, hooks, MCP servers, and plugins.
+globs: "*.go, *.js, *.md, *.json, *.toml, *.yaml, *.yml"
+alwaysApply: false
 ---
 
-## Project Overview
+# Extending hawk-eco
 
-hawk-core-contracts is the shared cross-repo contract types package for the
-hawk ecosystem. It holds stable definitions that every engine and hawk itself
-depend on: severity levels, findings, tool contracts, event models, policy
-verdicts, review results, verification reports, and agent session state.
+hawk-eco is an open-source code intelligence platform. This document describes how to extend it with custom tools, skills, hooks, and integrations.
 
-**Tagline:** Shared contracts for the hawk ecosystem.
+## 1. Drop a project `AGENTS.md`
 
-## Ecosystem
+When hawk-eco starts in a directory, it looks for project-level instructions and injects them into the system prompt. The lookup walks from your current working directory **up to the nearest git root** and reads the first matching file at each level — general rules at the repo root, more specific rules in sub-trees. Files are labeled with their directory in the prompt (e.g. `## Project guidelines (services/api/AGENTS.md)`).
 
-hawk-core-contracts is a **foundation repo** in the hawk-eco mono-ecosystem:
+Accepted file names, in priority order at each level:
 
-| Component | Purpose |
-|-----------|---------|
-| **hawk-core-contracts** | Shared cross-repo contracts (this repo) |
-| **hawk-mcpkit** | Shared MCP server scaffolding |
-| **eyrie** | LLM provider runtime — routing, streaming, retries, caching |
-| **yaad** | Graph-based persistent memory for coding agents |
-| **tok** | Tokenizer, compression, secrets scanning, rate limiting |
-| **sight** | Diff-based code review and static analysis |
-| **inspect** | Security audit library (CVE, API security, CI output) |
-| **trace** | Session capture and replay CLI |
-| **hawk** | AI coding agent (this repo) |
+| Path | Notes |
+| --- | --- |
+| `./AGENTS.md` | The classic spot — committed to your repo, shared with the team. |
+| `./ZERO.md` | Brand-specific alias. Same format, lower priority. |
+| `./.zero/AGENTS.md` | Project-local, hidden, gitignored. Personal notes that stay out of git. |
 
-`hawk` and all engines import `hawk-core-contracts` when they share a real
-cross-repo contract. The repo itself never imports back.
+Matching is **case-insensitive** on the basename, so `AGENTS.md`, `Agents.md`, and `agents.md` resolve to the same file on Windows and macOS. The git-tracked filename in this repo is `AGENTS.md` — keep that on case-sensitive filesystems (Linux, the WSL filesystem, or a CI runner) to match what the loader looks for.
 
-## Architecture
+Both files use the same format. YAML frontmatter is optional; the markdown body is loaded as instructions for the agent. hawk-eco reads the file once at session start, so changes take effect on the next launch — not mid-session.
 
-```
-hawk-core-contracts/
-├── types/                  # Severity, findings, shared result vocabulary
-│   ├── finding.go          # Finding, FindingSlice, FilterBySeverity
-│   ├── severity.go         # Severity levels, ParseSeverity
-│   └── *_test.go           # Table-driven tests
-├── tools/                  # Provider-neutral tool call and result contracts
-│   └── *.go
-├── events/                 # Normalized tool and trace event contracts
-│   └── *.go
-├── policy/                 # Risk, permission verdict, guardian decision contracts
-│   └── *.go
-├── review/                 # Neutral review findings, comments, stats, results
-│   └── *.go
-├── verify/                 # Neutral verification findings, stats, reports
-│   └── *.go
-├── sessions/               # Cross-repo agent session state types
-│   └── *.go
-├── scripts/
-│   └── check-ecosystem-boundaries.sh   # CI guard: zero hawk-eco deps
-├── .github/
-│   └── workflows/
-│       ├── ci.yml                  # CI: format, module hygiene, vet, lint, test, security
-│       └── release.yml             # GitHub Release on v* tags
-├── Makefile                # Local dev tasks
-├── lefthook.yml            # Pre-commit hooks (boundary guard, co-author strip)
-├── AGENTS.md               # This file
-├── README.md               # Package map, scope, governance rules
-├── CHANGELOG.md            # Keep a Changelog format
-├── CODEOWNERS              # Code ownership (package-level + infra)
-├── LICENSE                 # MIT
-├── VERSION                 # Source of truth for versioning
-└── go.mod / go.sum         # Module files (stdlib only)
+```markdown
+# Project conventions for <your project>
+
+- Build with `make`, not `go build` directly.
+- Tests live next to the source file (`foo_test.go` next to `foo.go`).
+- Run `make lint` before opening a PR.
+- Never edit files under `third_party/` — those are vendored.
 ```
 
-## Key Design Decisions
+Tips:
 
-- **Implementation-free:** This repo holds only type definitions and
-  constructors. No CLI code, no provider implementations, no runtime logic,
-  no storage, no orchestration. See Scope below for the full list.
-- **Zero hawk-eco dependencies:** This repo depends only on the Go standard
-  library. `make boundaries` (also run in CI) enforces this. Violations are
-  caught by `scripts/check-ecosystem-boundaries.sh`.
-- **Additive-only:** Changes to contracts should be backward-compatible.
-  New fields get zero values; new packages are added, never removed.
-- **Prefixed consumers, not dependents:** `hawk` and engines import this
-  repo when they share a real cross-repo contract; it never imports them
-  back.
-- **Single source of truth:** `VERSION` file is the canonical version
-  identifier. `go.mod` uses `go 1.26.4`.
+- Keep each file under ~8 KiB. hawk-eco caps the **total** across all matched files at 32 KiB; everything past the cap is dropped.
+- Re-state rules in the imperative voice: "Run `make lint`", not "you should consider running the linter".
+- Don't put secrets, model IDs, or environment-specific paths in `AGENTS.md`. Use config files for those.
+- In a monorepo, drop a narrower `AGENTS.md` in each sub-tree (e.g. `services/api/AGENTS.md`). hawk-eco picks those up automatically when you launch from inside the sub-tree.
+- A YAML frontmatter block (`---\n...\n---`) at the top is preserved verbatim in the injected prompt but is not parsed for `globs:` or `alwaysApply:` scoping today — keep the body self-contained.
 
-## Scope
+### Personal guidelines, across every project
 
-### Allowed here
+For preferences that follow *you*, not a specific repo (tone, tooling habits, workflow), drop a `ZERO.md` in your user config directory: `~/.config/hawk-eco/ZERO.md` on Linux/macOS, `%AppData%\Roaming\hawk-eco\ZERO.md` on Windows — the same directory as config files and your personal specialists. Same format and 8 KiB cap as the project files above, and the same case-insensitive basename match.
 
-- shared enums (severity levels, risk levels, phases)
-- shared structs (findings, tool calls, events, verdicts, reports)
-- event models (tool events, trace events, usage info)
-- finding/result models (severity, confidence, status)
-- engine request/response contracts
-- policy and tool contracts
+This file is injected as its own `## User guidelines` section, before the project's `AGENTS.md`/`ZERO.md`, and is labeled as personal preference in the prompt: project guidelines are the later, more specific instruction and take precedence over it when the two conflict.
 
-### Not allowed here
+## 2. Custom specialists
 
-- CLI code (commands, flags, shell output)
-- provider implementations
-- runtime logic
-- storage implementations
-- product orchestration
-- anything that belongs in a single consuming repo
+Specialists are hawk-eco's sub-agents. Three scopes, in priority order:
 
-If a type is only used inside one repo, it should stay in that repo.
+| Scope | Path | Shared? |
+| --- | --- | --- |
+| Built-in | compiled into hawk-eco | yes |
+| User | `~/.config/hawk-eco/specialists/*.md` | no — your machine only |
+| Project | `./.zero/specialists/*.md` | yes — the repo team |
 
-## Development Guidelines
+Project overrides user overrides built-in when names collide.
 
-### Build & Test
+A specialist is a markdown manifest with frontmatter and a system prompt:
+
+```markdown
+---
+description: Reviews API changes for breaking-change risk and missing tests.
+tools: read-only,plan
+---
+
+You review API changes. For every changed hunk in `internal/api/` or any file
+that ends in `_api.go`:
+
+1. Confirm the public signature is backward-compatible, or note the breaking
+   change explicitly with the migration path.
+2. Confirm a corresponding test exists in `internal/api/*_test.go` and that
+   the new behaviour is exercised.
+3. Flag any new exported symbol without a doc comment.
+
+Reply with one JSON object per finding: `{"file", "line", "severity", "message", "fix"}`.
+```
+
+CLI management:
 
 ```bash
-make test          # Run unit tests (no race detector)
-make test-race     # Run unit tests with race detector
-make lint          # Run golangci-lint
-make boundaries    # Enforce zero hawk-eco imports
-make ci            # Full CI suite (tidy, fmt, vet, boundaries, lint, test-race, security)
+hawk-eco specialist list
+hawk-eco specialist show api-reviewer
+hawk-eco specialist create api-reviewer \
+    --project \
+    --description "Reviews API changes" \
+    --tools read-only,plan \
+    --prompt "$(cat api-reviewer.md)"
+hawk-eco specialist edit api-reviewer --project
+hawk-eco specialist delete api-reviewer --project
+hawk-eco specialist path                       # prints the resolved specialists directory
 ```
 
-### Go Conventions
+## 3. Skills
 
-- Standard Go project layout: `cmd/` for entry points, `internal/` for private
-- Tests live alongside source files (`foo.go` → `foo_test.go`)
-- Package-level tests use `package <name>_test` to avoid importing internal
-  packages when testing only public API surface
-- Use table-driven tests where practical
-- Errors are values — wrap with `fmt.Errorf("context: %w", err)`
-- No global mutable state; prefer dependency injection
+Skills are markdown instruction files that extend agent capabilities. They can be:
+- Project-scoped: dropped in `./.zero/skills/` or `./skills/`
+- User-scoped: dropped in `~/.config/hawk-eco/skills/`
 
-### Commit Conventions
+A skill manifest:
 
-Use [Conventional Commits](https://www.conventionalcommits.org/):
+```markdown
+---
+description: How to review Go code for security issues
+globs: "*.go"
+alwaysApply: true
+---
+
+When reviewing Go code for security:
+
+1. Check for SQL injection patterns
+2. Verify error handling doesn't expose sensitive data
+3. Confirm secrets are not hardcoded
+4. Validate input sanitization
 ```
-feat: add review result contracts
-fix: handle nil findings in FilterBySeverity
-refactor: extract severity parsing into shared helper
+
+## 4. Hooks
+
+Hooks allow custom commands to run at specific lifecycle points:
+- `beforeReview` — runs before code review starts
+- `afterReview` — runs after code review completes
+- `sessionStart` — runs at session initialization
+- `sessionEnd` — runs at session teardown
+
+```bash
+hawk-eco hook add beforeReview --command "lint-check"
+hawk-eco hook remove beforeReview
+hawk-eco hook list
 ```
 
-## Package Map
+## 5. MCP integration
 
-| Package | Contents | Owners |
-|---------|----------|--------|
-| `types/` | Severity levels, findings, shared result vocabulary | `@GrayCodeAI/llm-team` |
-| `tools/` | Provider-neutral tool call and tool result contracts | `@GrayCodeAI/llm-team` |
-| `events/` | Normalized tool and trace event contracts | `@GrayCodeAI/llm-team` |
-| `policy/` | Risk, permission verdict, guardian decision, approval request contracts | `@GrayCodeAI/llm-team` |
-| `review/` | Neutral review findings, comments, stats, and result contracts | `@GrayCodeAI/llm-team` |
-| `verify/` | Neutral verification findings, stats, and report contracts | `@GrayCodeAI/llm-team` |
-| `sessions/` | Cross-repo agent session state types | `@GrayCodeAI/llm-team` |
+MCP (Model Context Protocol) servers can expose tools to hawk-eco:
 
-## Package Guidelines
+```bash
+hawk-eco mcp add --name server --url http://localhost:8080
+hawk-eco mcp remove server
+hawk-eco mcp list
+```
 
-Each contract package follows these conventions:
+## 6. Plugins
 
-- **Pure data types:** structs, enums, constructors, and methods on those types
-- **No external dependencies:** only stdlib imports
-- **No I/O:** no file reads, HTTP calls, or database access
-- **JSON-serializable:** all public structs should serialize cleanly via
-  `encoding/json` (no `map[struct]` keys, no unexported fields without tags)
-- **Nil-safety:** pointer receivers for nil-safe methods; document expected
-  behavior for nil receivers
-- **Test file naming:** `*_test.go` alongside source files
-- **Package-level tests:** use `package <name>_test` when testing only the
-  public API surface of a package
+Plugins extend hawk-eco with custom tools and capabilities:
 
-## Adding a New Contract Package
+```bash
+hawk-eco plugin add --name my-plugin --path ./my-plugin
+hawk-eco plugin remove my-plugin
+hawk-eco plugin list
+```
 
-1. Create a new directory `<name>/` at the repo root
-2. Define types, enums, and constructors in `.go` files
-3. Add tests in `*_test.go` files (using `package <name>_test`)
-4. Do not add any imports from the hawk ecosystem — only stdlib
-5. Add the package to `CODEOWNERS` under the `@GrayCodeAI/llm-team` entry
-6. Add any necessary types to the package map in the README
-7. Add package-level docs ( exported type descriptions)
+## 7. Verification
 
-## Testing Patterns
+hawk-eco includes a self-verification system to validate local changes before contributing:
 
-- **Table-driven tests** with `t.Run(name, func(t *testing.T){...})` for all multi-case tests
-- **`t.Parallel()`** on all tests that don't share mutable state
-- **Package-level API tests** use `package <name>_test` to test only public surface without importing internal packages
-- **No mocks framework** — use concrete types and test doubles
-- **JSON round-trip tests** for serializable structs (marshal → unmarshal → compare fields)
+```bash
+hawk-eco verify
+hawk-eco verify --fix
+```
 
-## Common Pitfalls
+## Development
 
-- Do not import any hawk-eco package in this repo — only the Go standard library
-- Do not put runtime logic, CLI code, or product orchestration here
-- If a type is only used inside one repo, it should stay in that repo
-- Keep changes additive; avoid renaming or restructuring existing types
-- Do not add non-stdlib dependencies — if you need something, put it in the
-  consuming engine instead
-- `go.mod` has no `require` blocks (stdlib only); never add module dependencies
-
-## File Organization Notes
-
-| File | Purpose |
-|------|---------|
-| `types/` | Severity levels, findings, result vocabulary |
-| `tools/` | Tool call/result contracts |
-| `events/` | Tool and trace event contracts |
-| `policy/` | Risk and permission verdict contracts |
-| `review/` | Review result contracts |
-| `verify/` | Verification report contracts |
-| `sessions/` | Agent session state contracts |
-| `scripts/check-ecosystem-boundaries.sh` | CI guard against hawk-eco imports |
-| `.github/workflows/ci.yml` | CI pipeline |
-| `.github/workflows/release.yml` | GitHub Release on `v*` tags |
-| `Makefile` | Local dev tasks |
-| `lefthook.yml` | Pre-commit hooks |
-| `AGENTS.md` | This file |
-| `README.md` | Package map, scope, governance rules |
-| `CHANGELOG.md` | Keep a Changelog format |
-| `CODEOWNERS` | Code ownership |
-| `VERSION` | Canonical version |
+```bash
+make lint
+hawk-eco verify
+```
