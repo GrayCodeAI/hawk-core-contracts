@@ -1,6 +1,9 @@
 package policy
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Risk is the severity of a permission or policy verdict.
 type Risk int
@@ -30,7 +33,7 @@ func (r Risk) String() string {
 
 // ParseRisk parses a risk name (case-insensitive) into a Risk value.
 func ParseRisk(s string) (Risk, error) {
-	switch lower(s) {
+	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "low":
 		return RiskLow, nil
 	case "medium", "med", "moderate":
@@ -121,16 +124,4 @@ type PermissionRequest struct {
 	ToolName string `json:"tool_name"`
 	ToolID   string `json:"tool_id,omitempty"`
 	Summary  string `json:"summary,omitempty"`
-}
-
-func lower(s string) string {
-	b := make([]byte, len(s))
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c >= 'A' && c <= 'Z' {
-			c += 'a' - 'A'
-		}
-		b[i] = c
-	}
-	return string(b)
 }
