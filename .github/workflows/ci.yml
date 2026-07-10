@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GO_VERSION: "1.26.4"
+  GO_VERSION: "1.26.5"
 
 jobs:
   format:
@@ -114,6 +114,14 @@ jobs:
         run: bash ./scripts/check-ecosystem-boundaries.sh
       - name: Test with race detector
         run: go test ./... -race -count=1 -shuffle=on -coverprofile=coverage.out -covermode=atomic -timeout=120s
+      - name: Coverage threshold (minimum 90%)
+        run: |
+          coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%' | tail -1)
+          echo "Coverage: ${coverage}%"
+          if (( $(echo "${coverage} < 90" | bc -l) )); then
+            echo "::error::Coverage ${coverage}% is below minimum 90%"
+            exit 1
+          fi
       - name: Upload coverage
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
