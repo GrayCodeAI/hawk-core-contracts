@@ -1,0 +1,20 @@
+version: v2
+plugins:
+  # Go: generated for potential future opt-in use only — NOT wired into the
+  # existing hand-written package (types/, tools/, events/, policy/,
+  # review/, verify/, sessions/), which stays the source of truth for the
+  # three existing Go consumers (sight, inspect, hawk). See buf.yaml /
+  # README for why.
+  - local: protoc-gen-go
+    out: gen/go
+    opt: paths=source_relative
+  # Python and TypeScript: no existing consumers adopt these yet (see
+  # README) — generated so hawk-sdk-python / yaad's TS SDK can opt in later
+  # without hawk-core-contracts needing another release.
+  - remote: buf.build/protocolbuffers/python
+    out: gen/python
+  - remote: buf.build/protocolbuffers/pyi
+    out: gen/python
+  - remote: buf.build/bufbuild/es
+    out: gen/typescript
+    opt: target=ts

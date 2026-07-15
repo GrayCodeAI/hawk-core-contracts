@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "hawk/contracts/v1/severity.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// VerifyFinding mirrors verify.Finding (verify/verify.go) — the neutral
+// verification finding contract shared across Hawk and verification
+// engines. See review.proto's ReviewFinding comment for why this is a
+// separate message from Finding/ReviewFinding rather than a shared shape.
+message VerifyFinding {
+  string check = 1;
+  Severity severity = 2;
+  string url = 3;
+  string element = 4;
+  string message = 5;
+  string fix = 6;
+  string evidence = 7;
+}
+
+// VerifyStats mirrors verify.Stats — verification execution metrics.
+// Same map-key and duration encoding rationale as review.proto's
+// ReviewStats.
+message VerifyStats {
+  int32 pages_scanned = 1;
+  int32 findings_total = 2;
+  map<int32, int32> by_severity = 3;
+  map<string, int32> by_check = 4;
+  map<string, int64> duration_per_check = 5;
+}
+
+// VerifyReport mirrors verify.Report — the neutral verification report
+// contract. duration is int64 nanoseconds, matching Go's default JSON
+// marshaling of time.Duration.
+message VerifyReport {
+  string target = 1;
+  repeated VerifyFinding findings = 2;
+  VerifyStats stats = 3;
+  int32 crawled_urls = 4;
+  int64 duration = 5;
+  Severity fail_on = 6;
+}

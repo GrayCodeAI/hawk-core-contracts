@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// ToolCall mirrors tools.ToolCall (tools/tool.go) — a provider-neutral
+// tool invocation contract. arguments is arbitrary JSON in Go
+// (map[string]interface{}); google.protobuf.Struct is the standard proto
+// representation of an arbitrary JSON object.
+message ToolCall {
+  string id = 1;
+  string name = 2;
+  google.protobuf.Struct arguments = 3;
+}
+
+// ToolResult mirrors tools.ToolResult — a provider-neutral tool execution
+// result contract. Field name is deliberately tool_use_id (not
+// tool_call_id): hawk-sdk-go independently hand-rolled its own ToolResult
+// with tool_call_id, which is exactly the kind of naming drift this schema
+// (and buf breaking) exists to catch and prevent going forward — this
+// proto is authoritative for the tool_use_id spelling.
+message ToolResult {
+  string tool_use_id = 1;
+  string content = 2;
+  bool is_error = 3;
+}

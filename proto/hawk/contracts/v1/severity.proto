@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// Severity represents the impact level of a finding. Mirrors types.Severity
+// (types/severity.go) exactly: this is an int-backed Go enum whose zero
+// value ("info") is itself meaningful, not a sentinel — so unlike most
+// proto3 enums, the first value here is SEVERITY_INFO, not an artificial
+// _UNSPECIFIED, to keep the numeric values identical to the Go iota
+// constants (Info=0 .. Critical=4). This matters because
+// review.Stats.by_severity / verify.Stats.by_severity are
+// map<int32, int32> keyed by this exact numeric value, matching what Go's
+// encoding/json already emits for a map keyed by a non-string int type.
+enum Severity {
+  // buf:lint:ignore ENUM_ZERO_VALUE_SUFFIX
+  SEVERITY_INFO = 0;
+  SEVERITY_LOW = 1;
+  SEVERITY_MEDIUM = 2;
+  SEVERITY_HIGH = 3;
+  SEVERITY_CRITICAL = 4;
+}
+
+// TokenSeverity mirrors types.TokenSeverity (compression/token error rule
+// severity). Go represents this as a string enum with no defined zero
+// value; proto3 requires one, so TOKEN_SEVERITY_UNSPECIFIED=0 is added.
+enum TokenSeverity {
+  TOKEN_SEVERITY_UNSPECIFIED = 0;
+  TOKEN_SEVERITY_LOW = 1;
+  TOKEN_SEVERITY_MEDIUM = 2;
+  TOKEN_SEVERITY_HIGH = 3;
+  TOKEN_SEVERITY_CRITICAL = 4;
+}
+
+// AuditSeverity mirrors types.AuditSeverity (security audit finding
+// severity; Go values are uppercase strings CRITICAL/WARNING/INFO).
+enum AuditSeverity {
+  AUDIT_SEVERITY_UNSPECIFIED = 0;
+  AUDIT_SEVERITY_INFO = 1;
+  AUDIT_SEVERITY_WARNING = 2;
+  AUDIT_SEVERITY_CRITICAL = 3;
+}
