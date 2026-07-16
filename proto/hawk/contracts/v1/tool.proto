@@ -6,6 +6,15 @@ import "google/protobuf/struct.proto";
 
 option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
 
+// Additive-only version-bump rule for ToolMeta.version:
+//
+// Additive field/message additions (new fields, new enum values, new messages)
+// do NOT bump ToolMeta.version — only breaking changes (field removal, type
+// change, field-number reuse, reserved-range changes) do. The hand-written Go
+// types in tools/versioning.go are the source of truth for the three Go
+// consumers (sight, inspect, hawk); the .proto is authoritative for schema-level
+// breaking-change detection and cross-language codegen. Keep the two in sync.
+
 // ToolCall mirrors tools.ToolCall (tools/tool.go) — a provider-neutral
 // tool invocation contract. arguments is arbitrary JSON in Go
 // (map[string]interface{}); google.protobuf.Struct is the standard proto
@@ -26,4 +35,91 @@ message ToolResult {
   string tool_use_id = 1;
   string content = 2;
   bool is_error = 3;
+}
+
+// ToolNamespace is a CLOSED enum identifying the harness that owns a tool. A
+// new namespace is a wire-breaking change: it intentionally fails strict typed
+// deserialization on consumers that don't yet know about it (forward-safety — a
+// deploy that rolls the contract forward before the consumer code cannot
+// silently mis-route a tool it doesn't understand). Enum value 6 (ACP) is
+// reserved for the forthcoming hawk-acp repo.
+enum ToolNamespace {
+  TOOL_NAMESPACE_UNSPECIFIED = 0;
+  TOOL_NAMESPACE_HAWK_BUILD = 1;
+  TOOL_NAMESPACE_HAWK_BUILD_CONCISE = 2;
+  TOOL_NAMESPACE_CODEX = 3;
+  TOOL_NAMESPACE_OPENCODE = 4;
+  TOOL_NAMESPACE_MCP = 5;
+  TOOL_NAMESPACE_ACP = 6;
+}
+
+// ToolMeta is the canonical identity envelope attached to tool-call events.
+// version is an additive-only string bump (see file-level doc comment): new
+// additive fields do NOT change it. namespace is closed (see ToolNamespace);
+// label is a cross-harness grouping key; read_only marks tools the harness must
+// treat as side-effect free.
+message ToolMeta {
+  string version = 1;
+  string name = 2;
+  string kind = 3;
+  ToolNamespace namespace = 4;
+  string label = 5;
+  bool read_only = 6;
+}
+
+// FinalizeErrorCode classifies why a FinalizeToolConfig call reported a
+// violation or warning.
+enum FinalizeErrorCode {
+  FINALIZE_ERROR_CODE_UNSPECIFIED = 0;
+  FINALIZE_ERROR_CODE_UNKNOWN_TOOL = 1;
+  FINALIZE_ERROR_CODE_INCOMPATIBLE_VERSION = 2;
+  FINALIZE_ERROR_CODE_DEPRECATED_REPLACED = 3;
+  FINALIZE_ERROR_CODE_INVALID_PARAMS = 4;
+}
+
+// VersionWarning surfaces non-fatal, behavior-version drift during finalize.
+message VersionWarning {
+  FinalizeErrorCode code = 1;
+  string message = 2;
+  repeated string affected_tools = 3;
+}
+
+// FinalizeConfigViolation reports a fatal, deterministic problem that keeps a
+// finalize call from succeeding.
+message FinalizeConfigViolation {
+  FinalizeErrorCode code = 1;
+  string tool_id = 2;
+  string message = 3;
+}
+
+// FinalizeToolConfigRequest is the single, locking call that atomically
+// resolves the tool configuration for a server: pick a behavior_version and an
+// enabled tool set, and the server resolves both together so partial,
+// interleaved enable/disable calls can never leave an inconsistent state.
+message FinalizeToolConfigRequest {
+  string behavior_version = 1;
+  repeated string enabled_tools = 2;
+}
+
+// FinalizeToolConfigResponse carries the resolved behavior_version plus any
+// warnings or violations. violations non-empty means the call did NOT succeed
+// and tools are NOT safe to call; finalized == true with no violations means
+// the lock is held and tools may be invoked.
+message FinalizeToolConfigResponse {
+  string behavior_version = 1;
+  repeated VersionWarning warnings = 2;
+  repeated FinalizeConfigViolation violations = 3;
+  bool finalized = 4;
+}
+
+// HawkToolsService is the tool lifecycle RPC surface for hawk. A single,
+// locking FinalizeToolConfig call replaces the scattered enable/disable/options
+// RPCs found in older harnesses (SpaceXAI grok's Enable/Disable/Get/Set
+// ToolOptions, Reminders, Truncation, SystemPrompt, AgentInfo, CompletionState):
+// hawk starts clean with just the one call, which atomically commits a
+// behavior_version + enabled-tool set and reports any violations or
+// back-compat warnings. After a successful FinalizeToolConfig call, tools are
+// safe to call.
+service HawkToolsService {
+  rpc FinalizeToolConfig(FinalizeToolConfigRequest) returns (FinalizeToolConfigResponse);
 }

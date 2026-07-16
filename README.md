@@ -19,7 +19,7 @@ go get github.com/GrayCodeAI/hawk-core-contracts
 | Package | Key Types | Purpose |
 |---------|-----------|---------|
 | `types/` | `Severity`, `Finding`, `FindingSlice`, `ParseSeverity` | Severity levels, findings, shared result vocabulary |
-| `tools/` | `ToolCall`, `ToolResult` | Provider-neutral tool call and result contracts |
+| `tools/` | `ToolCall`, `ToolResult`, `ToolMeta`, `FinalizeResult`, version lifecycle types | Provider-neutral tool call, result, identity, and finalization contracts |
 | `events/` | `ToolEvent`, `TraceEvent`, `UsageInfo` | Normalized tool and trace event contracts |
 | `policy/` | `Risk`, `PermissionVerdict`, `Allow`, `Deny` | Risk, permission verdict, guardian decision, approval request contracts |
 | `review/` | `Result`, `Finding`, `Comment` | Neutral review findings, comments, stats, and result contracts |
@@ -78,6 +78,10 @@ complete:
 3. Tool, event, and policy contracts added
 4. Review and verification result contracts added
 5. Sessions package added for cross-repo session state
+6. Tool contract versioning & finalization: `ToolMeta` identity envelope, additive-only
+   version bump rule, closed `ToolNamespace` enum, `BehaviorPreset` back-compat presets,
+   and the single-locking `FinalizeToolConfig` lifecycle (with `FinalizeResult`,
+   `VersionWarning`, `FinalizeConfigViolation`)
 
 ## Ecosystem
 
@@ -97,6 +101,28 @@ hawk-core-contracts is a **foundation repo** in the hawk-eco mono-ecosystem:
 
 `hawk` and all engines import `hawk-core-contracts` when they share a real
 cross-repo contract; the repo itself never imports back.
+
+## Tool Contract Versioning & Finalization
+
+Tool configuration has a single locking **finalize** step instead of a scattered set of
+enable/disable/options calls that can leave the tool set in an inconsistent state.
+
+**`ToolMeta`** is the canonical identity envelope attached to every tool-call event. Its
+`version` string is **additive-only**: new additive fields do not change it; only breaking
+changes (field removal, type change, reserved-range change) bump it. `namespace` is a
+**closed enum** (`ToolNamespace`) — a new unknown namespace intentionally fails strict typed
+deserialization (`ToolNamespaceFrom` returns an error), so a forward-rolled contract can't
+silently mis-route tools to a harness that doesn't understand them. `label` is a
+cross-harness grouping key; `read_only` marks tools the harness must treat as side-effect free.
+
+**`FinalizeToolConfig`** is the single, locking RPC that atomically commits a
+`behavior_version` (a `BehaviorPreset`: `current`, `legacy`, or unspecified) plus an
+enabled-tool set, and returns any `VersionWarning`s (non-fatal drift) or
+`FinalizeConfigViolation`s (fatal, deterministic failures). After a call where
+`FinalizeResult.Ok()` returns true (`Finalized && no violations`), tools are safe to call.
+
+This models the lifecycle in SpaceXAI `grok`, but starts clean — the old scattered
+Enable/Disable/Get/Set-ToolOptions surface is intentionally absent.
 
 ## Ecosystem Boundaries
 
