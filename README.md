@@ -25,6 +25,7 @@ go get github.com/GrayCodeAI/hawk-core-contracts
 | `review/` | `Result`, `Finding`, `Comment` | Neutral review findings, comments, stats, and result contracts |
 | `verify/` | `Report`, `Finding` | Neutral verification findings, stats, and report contracts |
 | `sessions/` | `Phase`, `CostAccumulator`, `ParsePhase` | Cross-repo agent session state types |
+| `agent/` | `SpawnRequest`, `SpawnResult`, hook event names | Typed subagent spawn + hook vocabulary |
 
 ## Architecture
 
@@ -36,7 +37,8 @@ hawk-core-contracts (stdlib only)
 ├── policy/    Risk, PermissionVerdict — governance contracts
 ├── review/    Result, Finding, Comment — review result contracts
 ├── verify/    Report, Finding — verification report contracts
-└── sessions/  Phase, CostAccumulator — session state contracts
+├── sessions/  Phase, CostAccumulator — session state contracts
+└── agent/     SpawnRequest, SpawnResult, hook events — subagent spawn contracts
 ```
 
 ## Scope

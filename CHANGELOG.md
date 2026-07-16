@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.6] — 2026-07-16
+
+### Added
+
+- `agent/` package: typed subagent spawn contracts (`SpawnRequest`,
+  `SpawnResult`, capability/isolation/subagent-type parse helpers,
+  `Normalize`/`Validate`) and canonical hook event names with vendor
+  aliases (`CanonicalHookEvent`). Year 0 Grok behavioral port (PACK-01).
+- `proto/hawk/contracts/v1/agent.proto` mirroring `SpawnRequest` /
+  `SpawnResult` for buf lint/breaking and cross-language codegen.
+
+## [0.1.5] — 2026-07-11
+
 ### Added
 
 - `proto/` — a Buf-managed protobuf schema mirroring every exported Go type,
