@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// Risk mirrors policy.Risk (policy/policy.go) — severity of a permission
+// or policy verdict. Like Severity, Go's zero value (Low) is meaningful,
+// not a sentinel, so the numeric values are kept identical to the Go iota
+// constants (Low=0 .. Blocked=3) rather than inserting an artificial
+// _UNSPECIFIED at 0.
+enum Risk {
+  // buf:lint:ignore ENUM_ZERO_VALUE_SUFFIX
+  RISK_LOW = 0;
+  RISK_MEDIUM = 1;
+  RISK_HIGH = 2;
+  RISK_BLOCKED = 3;
+}
+
+// PermissionVerdict mirrors policy.PermissionVerdict — the unified outcome
+// type for permission subsystems.
+message PermissionVerdict {
+  bool allowed = 1;
+  string reason = 2;
+  string rule = 3;
+  Risk risk = 4;
+  double confidence = 5;
+  string source = 6;
+}
+
+// GuardianDecision mirrors policy.GuardianDecision — a provider-neutral
+// automatic permission review response.
+message GuardianDecision {
+  bool allowed = 1;
+  string reason = 2;
+  double confidence = 3;
+}
+
+// PermissionRequest mirrors policy.PermissionRequest — a user-facing
+// approval request.
+message PermissionRequest {
+  string tool_name = 1;
+  string tool_id = 2;
+  string summary = 3;
+}

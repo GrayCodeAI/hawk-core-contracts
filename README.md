@@ -111,6 +111,40 @@ Rules that keep this repo at the foundation layer:
 If a change here would require importing anything outside the standard
 library, that type does not belong in this repo.
 
+## Codegen
+
+`proto/hawk/contracts/v1/*.proto` mirrors every exported type above, one
+`.proto` file per Go package. It exists for two things the hand-written Go
+package alone can't give you:
+
+- **Schema-level breaking-change detection.** CI's `proto` job runs
+  `buf breaking` against `main` on every PR — catches the class of bug
+  already seen once in this ecosystem (`hawk-sdk-go` independently
+  hand-rolled its own `ToolResult` with a field named `tool_call_id`,
+  diverging from this repo's `tool_use_id`, because nothing checked for it).
+- **Python / TypeScript codegen**, for whenever a non-Go consumer wants this
+  vocabulary instead of hand-porting it. `buf generate` produces
+  `gen/go/`, `gen/python/`, `gen/typescript/` — not committed (regenerate
+  with `make proto`), and not currently imported by anything: `hawk-sdk-go`,
+  `hawk-sdk-python`, and `yaad`'s TypeScript SDK all still hand-port their
+  own subset of this vocabulary today (`hawk-sdk-python/src/hawk/sessions.py`
+  and `types.py` are the main example) and haven't adopted the generated
+  packages. That's a real adoption decision for those repos to make on
+  their own schedule, not something this repo forces.
+
+**The `.proto` files and the Go structs are two independent, hand-kept-in-sync
+definitions** — `gen/go/` is deliberately its own nested Go module (see
+`gen/go/go.mod`) precisely so depending on `google.golang.org/protobuf`
+there never touches this repo's zero-dependency root module. When you add
+or change an exported Go type, update the matching `.proto` message in the
+same PR — see `AGENTS.md`.
+
+Some fields don't map 1:1 by protobuf convention; each divergence is
+commented in the `.proto` source at the point it occurs (e.g. `Severity`'s
+zero value is `SEVERITY_INFO`, not an `_UNSPECIFIED` sentinel, to keep its
+numeric values identical to the Go `iota` constants that
+`map[Severity]int` fields serialize by).
+
 ## Package Ownership
 
 | Path | Team |
@@ -122,6 +156,7 @@ library, that type does not belong in this repo.
 | `/review/` | `@GrayCodeAI/llm-team` |
 | `/verify/` | `@GrayCodeAI/llm-team` |
 | `/sessions/` | `@GrayCodeAI/llm-team` |
+| `/proto/` | `@GrayCodeAI/llm-team` |
 | `/VERSION` | `@GrayCodeAI/maintainers` |
 | `/Makefile` | `@GrayCodeAI/devops-team` |
 | `/*.md` | `@GrayCodeAI/docs-team` |

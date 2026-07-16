@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "hawk/contracts/v1/severity.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// ReviewFinding mirrors review.Finding (review/review.go) — the neutral
+// review finding contract shared across Hawk and review engines. Named
+// ReviewFinding here (proto has one flat message namespace per package;
+// Go disambiguates by package instead) — distinct from Finding
+// (finding.proto, mirrors types.Finding) and VerifyFinding (verify.proto):
+// these are three genuinely different field sets in Go today, not one
+// shape, so they stay three separate messages here too.
+message ReviewFinding {
+  string concern = 1;
+  Severity severity = 2;
+  string file = 3;
+  int32 line = 4;
+  int32 end_line = 5;
+  string message = 6;
+  string fix = 7;
+  string reasoning = 8;
+  string cwe = 9;
+  double confidence = 10;
+  bool sast_source = 11;
+}
+
+// ReviewInlineComment mirrors review.InlineComment — a review finding
+// mapped to a concrete diff position.
+message ReviewInlineComment {
+  string path = 1;
+  int32 start_line = 2;
+  int32 end_line = 3;
+  string body = 4;
+  string suggestion = 5;
+}
+
+// ReviewStats mirrors review.Stats — review execution metrics. by_severity
+// is map<int32, int32> keyed by the Severity numeric value (Go's
+// map[contracts.Severity]int marshals to integer-string JSON keys, not
+// severity names — see severity.proto's comment on Severity's numbering).
+// duration_per_concern is int64 nanoseconds per key, matching Go's default
+// JSON marshaling of time.Duration (a plain int64, not
+// google.protobuf.Duration's "3.000001s"-style string).
+message ReviewStats {
+  int32 files_reviewed = 1;
+  int32 hunks_analyzed = 2;
+  int32 findings_total = 3;
+  map<int32, int32> by_severity = 4;
+  map<string, int32> by_concern = 5;
+  int32 tokens_used = 6;
+  map<string, int64> duration_per_concern = 7;
+  double average_confidence = 8;
+  int32 high_confidence_count = 9;
+  int32 low_confidence_count = 10;
+}
+
+// ReviewConfidenceBreakdown mirrors review.ConfidenceBreakdown — review
+// findings grouped by confidence band.
+message ReviewConfidenceBreakdown {
+  repeated ReviewFinding high = 1;
+  repeated ReviewFinding medium = 2;
+  repeated ReviewFinding low = 3;
+}
+
+// ReviewSASTFusionResult mirrors review.SASTFusionResult — tracks how the
+// LLM handled SAST findings during a review. Only populated in Go when
+// SAST-LLM fusion is active.
+message ReviewSASTFusionResult {
+  repeated ReviewFinding confirmed = 1;
+  repeated ReviewFinding dismissed = 2;
+  repeated ReviewFinding unaddressed = 3;
+}
+
+// ReviewResult mirrors review.Result — the neutral review result contract.
+message ReviewResult {
+  repeated ReviewFinding findings = 1;
+  repeated ReviewInlineComment comments = 2;
+  ReviewStats stats = 3;
+  string report = 4;
+  Severity fail_on = 5;
+  // Optional in Go (*SASTFusionResult, omitempty).
+  ReviewSASTFusionResult sast_fusion = 6;
+  // Optional in Go (*ConfidenceBreakdown, omitempty).
+  ReviewConfidenceBreakdown confidence_breakdown = 7;
+}

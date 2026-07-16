@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "google/protobuf/timestamp.proto";
+import "hawk/contracts/v1/severity.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// Finding mirrors types.Finding (types/finding.go) — a unified analysis
+// concern sourced from Hawk support engines.
+message Finding {
+  string id = 1;
+  string source = 2;
+  string concern = 3;
+  Severity severity = 4;
+  string file = 5;
+  string url = 6;
+  int32 line = 7;
+  int32 end_line = 8;
+  string message = 9;
+  string cwe = 10;
+  double confidence = 11;
+  string fix = 12;
+  string reasoning = 13;
+  repeated string tags = 14;
+  map<string, string> metadata = 15;
+  google.protobuf.Timestamp created_at = 16;
+}
+
+// FindingSummary mirrors types.FindingSummary — aggregate counts over a
+// set of findings. by_severity is keyed by Severity.String() (e.g.
+// "critical") in Go, since it's built from a map[string]int, not
+// map[Severity]int — unlike review.Stats/verify.Stats below, this one
+// really is string-keyed on the wire today.
+message FindingSummary {
+  int32 total = 1;
+  map<string, int32> by_source = 2;
+  map<string, int32> by_severity = 3;
+  double avg_confidence = 4;
+}

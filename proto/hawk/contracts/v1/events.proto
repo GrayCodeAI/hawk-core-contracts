@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// ToolEvent mirrors events.ToolEvent (events/events.go) — a normalized
+// tool event emitted by Hawk workflows.
+message ToolEvent {
+  string tool_name = 1;
+  google.protobuf.Struct tool_input = 2;
+  string cwd = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  string session_id = 5;
+  string transcript = 6;
+}
+
+// TraceEvent mirrors events.TraceEvent — a normalized trace record for
+// model/runtime activity.
+message TraceEvent {
+  string id = 1;
+  string name = 2;
+  string input = 3;
+  string output = 4;
+  string model = 5;
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time = 7;
+  map<string, string> metadata = 8;
+  // Optional in Go (*UsageInfo, omitempty). proto3 message fields are
+  // inherently optional/presence-tracked, so no extra wrapper is needed.
+  UsageInfo usage = 9;
+}
+
+// UsageInfo mirrors events.UsageInfo — token and cost information for a
+// trace event.
+message UsageInfo {
+  int32 prompt_tokens = 1;
+  int32 completion_tokens = 2;
+  int32 total_tokens = 3;
+  double cost_usd = 4;
+}

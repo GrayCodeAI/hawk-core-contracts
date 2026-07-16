@@ -28,7 +28,7 @@ GOVULNCHECK  := $(GOBIN_DIR)/govulncheck
 # Phony declarations (alphabetical).
 # ---------------------------------------------------------------------------
 .PHONY: all boundaries build ci clean cover fmt help hooks lint lint-fix \
-        security test test-race tidy version vet
+        proto security test test-race tidy version vet
 
 boundaries: ## Enforce foundation-repo import boundaries (zero GrayCodeAI/* deps).
 	bash ./scripts/check-ecosystem-boundaries.sh
@@ -86,6 +86,21 @@ security: ## Run govulncheck.
 tidy: ## Tidy go.mod / go.sum.
 	go mod tidy
 	go mod verify
+
+# ---------------------------------------------------------------------------
+# Proto (cross-language schema — not part of the `ci` composite target,
+# since it needs `buf` installed separately; run explicitly or see the
+# `proto` job in .github/workflows/ci.yml for what actually gates merges).
+# ---------------------------------------------------------------------------
+proto: ## Lint proto/, check for breaking changes vs main, and regenerate gen/.
+	@command -v buf >/dev/null 2>&1 || (echo "install: go install github.com/bufbuild/buf/cmd/buf@v1.71.0" && exit 1)
+	buf lint
+	@if git cat-file -e main:proto 2>/dev/null; then \
+		buf breaking --against '.git#branch=main'; \
+	else \
+		echo "proto/ does not exist on main yet — skipping breaking-change check."; \
+	fi
+	buf generate
 
 # ---------------------------------------------------------------------------
 # Composite gate used by CI and pre-push.

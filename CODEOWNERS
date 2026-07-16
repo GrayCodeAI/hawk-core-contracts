@@ -9,6 +9,7 @@
 /review/   @GrayCodeAI/llm-team
 /verify/   @GrayCodeAI/llm-team
 /sessions/ @GrayCodeAI/llm-team
+/proto/    @GrayCodeAI/llm-team
 /VERSION   @GrayCodeAI/maintainers
 
 # CI / release
