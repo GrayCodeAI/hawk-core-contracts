@@ -12,6 +12,15 @@ package llm
 
 import "context"
 
+// EyrieConfig holds client configuration.
+type EyrieConfig struct {
+	Provider   string `json:"provider,omitempty"`
+	APIKey     string `json:"-"`
+	BaseURL    string `json:"base_url,omitempty"`
+	Model      string `json:"model,omitempty"`
+	MaxRetries int    `json:"max_retries,omitempty"`
+}
+
 // ContentPart is a provider-neutral multimodal message part.
 type ContentPart struct {
 	Type       string          `json:"type"`
@@ -93,6 +102,12 @@ type ChatOptions struct {
 	ThinkingMode         string            `json:"thinking_mode,omitempty"`
 	ThinkingDisplay      string            `json:"thinking_display,omitempty"`
 	ThinkingEnabled      *bool             `json:"thinking_enabled,omitempty"`
+	// GLMThinkingEnabled toggles GLM/Z.ai extended reasoning via the provider's
+	// non-OpenAI thinking={"type":"enabled"|"disabled"} request parameter. Only
+	// applied for OpenAI-compatible providers whose compat config sets
+	// ThinkingFormat to "zai". When nil the parameter is omitted and the model
+	// uses its default (GLM defaults to enabled).
+	GLMThinkingEnabled   *bool             `json:"glm_thinking_enabled,omitempty"`
 	VirtualKeyID         string            `json:"virtual_key_id,omitempty"`
 	KimiContextCacheID   string            `json:"kimi_context_cache_id,omitempty"`
 	KimiCacheResetTTL    bool              `json:"kimi_cache_reset_ttl,omitempty"`
