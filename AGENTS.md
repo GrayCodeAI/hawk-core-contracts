@@ -97,3 +97,4 @@ This project is indexed by GitNexus as **hawk-core-contracts** (476 symbols, 758
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+This repo is a submodule of [hawk](https://github.com/GrayCodeAI/hawk) at `hawk/external/hawk-core-contracts`. Work in the submodule (go.work picks it up), push, sync here, PR/merge, then pull main in the submodule.
