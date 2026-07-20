@@ -3,7 +3,7 @@
 // It is the single source of truth for the conversation DTOs and the Provider
 // interface that hawk (product face) and eyrie (provider engine) speak across
 // their boundary. Both sides alias to these types, so there is exactly one
-// definition of eachDTO and no per-call conversion.
+// definition of each DTO and no per-call conversion.
 //
 // hawk owns the product vocabulary (hence names like EyrieMessage); eyrie
 // implements the port. eyrie's internal transport types stay eyrie-scoped and
@@ -66,7 +66,7 @@ type ToolResult struct {
 	IsError   bool   `json:"is_error,omitempty"`
 }
 
-// Tool is a tool definition.
+// EyrieTool is a tool definition.
 type EyrieTool struct {
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
@@ -88,49 +88,49 @@ type ToolChoiceOption struct {
 
 // ChatOptions holds request options for an engine chat call.
 type ChatOptions struct {
-	Provider             string            `json:"provider,omitempty"`
-	Model                string            `json:"model,omitempty"`
-	Temperature          *float64          `json:"temperature,omitempty"`
-	MaxTokens            int               `json:"max_tokens,omitempty"`
-	Stream               bool              `json:"stream,omitempty"`
-	Tools                []EyrieTool        `json:"tools,omitempty"`
-	System               string            `json:"system,omitempty"`
-	EnableCaching        bool              `json:"enable_caching,omitempty"`
-	ResponseFormat       *ResponseFormat   `json:"response_format,omitempty"`
-	ReasoningEffort      string            `json:"reasoning_effort,omitempty"`
-	ThinkingBudgetTokens int               `json:"thinking_budget_tokens,omitempty"`
-	ThinkingMode         string            `json:"thinking_mode,omitempty"`
-	ThinkingDisplay      string            `json:"thinking_display,omitempty"`
-	ThinkingEnabled      *bool             `json:"thinking_enabled,omitempty"`
+	Provider             string          `json:"provider,omitempty"`
+	Model                string          `json:"model,omitempty"`
+	Temperature          *float64        `json:"temperature,omitempty"`
+	MaxTokens            int             `json:"max_tokens,omitempty"`
+	Stream               bool            `json:"stream,omitempty"`
+	Tools                []EyrieTool     `json:"tools,omitempty"`
+	System               string          `json:"system,omitempty"`
+	EnableCaching        bool            `json:"enable_caching,omitempty"`
+	ResponseFormat       *ResponseFormat `json:"response_format,omitempty"`
+	ReasoningEffort      string          `json:"reasoning_effort,omitempty"`
+	ThinkingBudgetTokens int             `json:"thinking_budget_tokens,omitempty"`
+	ThinkingMode         string          `json:"thinking_mode,omitempty"`
+	ThinkingDisplay      string          `json:"thinking_display,omitempty"`
+	ThinkingEnabled      *bool           `json:"thinking_enabled,omitempty"`
 	// GLMThinkingEnabled toggles GLM/Z.ai extended reasoning via the provider's
 	// non-OpenAI thinking={"type":"enabled"|"disabled"} request parameter. Only
 	// applied for OpenAI-compatible providers whose compat config sets
 	// ThinkingFormat to "zai". When nil the parameter is omitted and the model
 	// uses its default (GLM defaults to enabled).
-	GLMThinkingEnabled   *bool             `json:"glm_thinking_enabled,omitempty"`
-	VirtualKeyID         string            `json:"virtual_key_id,omitempty"`
-	KimiContextCacheID   string            `json:"kimi_context_cache_id,omitempty"`
-	KimiCacheResetTTL    bool              `json:"kimi_cache_reset_ttl,omitempty"`
-	TopP                 *float64          `json:"top_p,omitempty"`
-	TopK                 *int              `json:"top_k,omitempty"`
-	StopSequences        []string          `json:"stop_sequences,omitempty"`
-	ToolChoice           *ToolChoiceOption `json:"tool_choice,omitempty"`
-	MetadataUserID       string            `json:"metadata_user_id,omitempty"`
-	ServiceTier          string            `json:"service_tier,omitempty"`
-	OutputEffort         string            `json:"output_effort,omitempty"`
-	OutputSchema         string            `json:"output_schema,omitempty"`
-	PresencePenalty      *float64          `json:"presence_penalty,omitempty"`
-	FrequencyPenalty     *float64          `json:"frequency_penalty,omitempty"`
-	N                    *int              `json:"n,omitempty"`
-	LogProbs             *bool             `json:"logprobs,omitempty"`
-	TopLogProbs          *int              `json:"top_logprobs,omitempty"`
-	Seed                 *int              `json:"seed,omitempty"`
-	Store                *bool             `json:"store,omitempty"`
-	Metadata             map[string]string `json:"metadata,omitempty"`
-	Modalities           []string          `json:"modalities,omitempty"`
-	AudioConfig          string            `json:"audio_config,omitempty"`
-	Prediction           string            `json:"prediction,omitempty"`
-	WebSearchOptions     string            `json:"web_search_options,omitempty"`
+	GLMThinkingEnabled *bool             `json:"glm_thinking_enabled,omitempty"`
+	VirtualKeyID       string            `json:"virtual_key_id,omitempty"`
+	KimiContextCacheID string            `json:"kimi_context_cache_id,omitempty"`
+	KimiCacheResetTTL  bool              `json:"kimi_cache_reset_ttl,omitempty"`
+	TopP               *float64          `json:"top_p,omitempty"`
+	TopK               *int              `json:"top_k,omitempty"`
+	StopSequences      []string          `json:"stop_sequences,omitempty"`
+	ToolChoice         *ToolChoiceOption `json:"tool_choice,omitempty"`
+	MetadataUserID     string            `json:"metadata_user_id,omitempty"`
+	ServiceTier        string            `json:"service_tier,omitempty"`
+	OutputEffort       string            `json:"output_effort,omitempty"`
+	OutputSchema       string            `json:"output_schema,omitempty"`
+	PresencePenalty    *float64          `json:"presence_penalty,omitempty"`
+	FrequencyPenalty   *float64          `json:"frequency_penalty,omitempty"`
+	N                  *int              `json:"n,omitempty"`
+	LogProbs           *bool             `json:"logprobs,omitempty"`
+	TopLogProbs        *int              `json:"top_logprobs,omitempty"`
+	Seed               *int              `json:"seed,omitempty"`
+	Store              *bool             `json:"store,omitempty"`
+	Metadata           map[string]string `json:"metadata,omitempty"`
+	Modalities         []string          `json:"modalities,omitempty"`
+	AudioConfig        string            `json:"audio_config,omitempty"`
+	Prediction         string            `json:"prediction,omitempty"`
+	WebSearchOptions   string            `json:"web_search_options,omitempty"`
 }
 
 // ContinuationConfig controls output continuation behavior.
@@ -139,7 +139,7 @@ type ContinuationConfig struct {
 	MaxTotalTokens   int
 }
 
-// Usage tracks token usage.
+// EyrieUsage tracks token usage.
 type EyrieUsage struct {
 	PromptTokens        int `json:"prompt_tokens"`
 	CompletionTokens    int `json:"completion_tokens"`
@@ -156,7 +156,7 @@ type ResolvedRoute struct {
 	DeploymentRouting bool   `json:"deployment_routing,omitempty"`
 }
 
-// Response is the chat response DTO.
+// EyrieResponse is the chat response DTO.
 type EyrieResponse struct {
 	Content        string         `json:"content"`
 	Thinking       string         `json:"thinking,omitempty"`
@@ -170,18 +170,23 @@ type EyrieResponse struct {
 
 // EyrieStreamEvent is a streaming event.
 type EyrieStreamEvent struct {
-	Type       string         `json:"type"`
-	Content    string         `json:"content,omitempty"`
-	ToolCall   *ToolCall      `json:"tool_call,omitempty"`
-	Thinking   string         `json:"thinking,omitempty"`
-	Error      string         `json:"error,omitempty"`
-	Warning    string         `json:"warning,omitempty"`
-	RequestID  string         `json:"request_id,omitempty"`
-	Usage      *EyrieUsage    `json:"usage,omitempty"`
-	StopReason string         `json:"stop_reason,omitempty"`
-	TTFTms     int            `json:"ttft_ms,omitempty"`
-	TTFT       int            `json:"ttft,omitempty"`
-	Route      *ResolvedRoute `json:"route,omitempty"`
+	Type       string      `json:"type"`
+	Content    string      `json:"content,omitempty"`
+	ToolCall   *ToolCall   `json:"tool_call,omitempty"`
+	Thinking   string      `json:"thinking,omitempty"`
+	Error      string      `json:"error,omitempty"`
+	Warning    string      `json:"warning,omitempty"`
+	RequestID  string      `json:"request_id,omitempty"`
+	Usage      *EyrieUsage `json:"usage,omitempty"`
+	StopReason string      `json:"stop_reason,omitempty"`
+	// TTFT and TTFTms both carry time-to-first-token in milliseconds but ride
+	// different events: the dedicated "ttft" event populates TTFT, while the
+	// terminal "done" event populates TTFTms. The engine normalizes the two
+	// into a single value (preferring TTFTms, falling back to TTFT). Both are
+	// retained for wire compatibility with existing producers/consumers.
+	TTFTms int            `json:"ttft_ms,omitempty"`
+	TTFT   int            `json:"ttft,omitempty"`
+	Route  *ResolvedRoute `json:"route,omitempty"`
 }
 
 // StreamResult wraps a streaming response with cleanup. Callers must call Close()

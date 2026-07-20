@@ -101,28 +101,28 @@ type GenerationOptions struct {
 	// applied for OpenAI-compatible providers whose compat config sets
 	// ThinkingFormat to "zai". When nil the parameter is omitted and the model
 	// uses its default (GLM defaults to enabled).
-	GLMThinkingEnabled   *bool
-	VirtualKeyID         string
-	KimiContextCacheID   string
-	KimiCacheResetTTL    bool
-	TopP                 *float64
-	TopK                 *int
-	StopSequences        []string
-	ToolChoice           *ToolChoiceOption
-	ServiceTier          string
-	OutputEffort         string
-	PresencePenalty      *float64
-	FrequencyPenalty     *float64
-	N                    *int
-	LogProbs             *bool
-	TopLogProbs          *int
-	Seed                 *int
-	Store                *bool
-	Metadata             map[string]string
-	Modalities           []string
-	AudioConfig          string
-	Prediction           string
-	WebSearchOptions     string
+	GLMThinkingEnabled *bool
+	VirtualKeyID       string
+	KimiContextCacheID string
+	KimiCacheResetTTL  bool
+	TopP               *float64
+	TopK               *int
+	StopSequences      []string
+	ToolChoice         *ToolChoiceOption
+	ServiceTier        string
+	OutputEffort       string
+	PresencePenalty    *float64
+	FrequencyPenalty   *float64
+	N                  *int
+	LogProbs           *bool
+	TopLogProbs        *int
+	Seed               *int
+	Store              *bool
+	Metadata           map[string]string
+	Modalities         []string
+	AudioConfig        string
+	Prediction         string
+	WebSearchOptions   string
 }
 
 // ModelCatalog is the model-discovery facet (used by routing + config).
@@ -144,19 +144,20 @@ type ModelCatalog interface {
 
 // Model is the product-facing view of model metadata.
 type Model struct {
-	ID               string  `json:"id"`
-	ProviderID       string  `json:"provider_id"`
-	CanonicalID      string  `json:"canonical_id,omitempty"`
-	DisplayName      string  `json:"display_name"`
-	Description      string  `json:"description,omitempty"`
-	Owner            string  `json:"owner,omitempty"`
-	ContextWindow    int     `json:"context_window,omitempty"`
-	MaxOutputTokens  int     `json:"max_output_tokens,omitempty"`
-	InputPricePer1M  float64 `json:"input_price_per_1m,omitempty"`
-	OutputPricePer1M float64 `json:"output_price_per_1m,omitempty"`
-	PriceKnown       bool    `json:"price_known"`
-	Capabilities     []string `json:"capabilities,omitempty"`
-	Source           string  `json:"source,omitempty"`
+	ID               string          `json:"id"`
+	ProviderID       string          `json:"provider_id"`
+	CanonicalID      string          `json:"canonical_id,omitempty"`
+	DisplayName      string          `json:"display_name"`
+	Description      string          `json:"description,omitempty"`
+	Owner            string          `json:"owner,omitempty"`
+	GatewayID        string          `json:"gateway_id,omitempty"`
+	ContextWindow    int             `json:"context_window,omitempty"`
+	MaxOutputTokens  int             `json:"max_output_tokens,omitempty"`
+	InputPricePer1M  float64         `json:"input_price_per_1m,omitempty"`
+	OutputPricePer1M float64         `json:"output_price_per_1m,omitempty"`
+	PriceKnown       bool            `json:"price_known"`
+	Capabilities     []string        `json:"capabilities,omitempty"`
+	Source           string          `json:"source,omitempty"`
 	LiveMetadata     json.RawMessage `json:"live_metadata,omitempty"`
 }
 
@@ -169,11 +170,15 @@ const (
 	ModelClassPremium    ModelClass = "premium"
 )
 
-// CatalogSnapshot is a point-in-time view of the model catalog.
+// CatalogSnapshot is an immutable, point-in-time host-facing view of a loaded
+// model catalog. It is the canonical definition; eyrie's engine.CatalogSnapshot
+// is a type alias to this so a single struct crosses the host boundary.
 type CatalogSnapshot struct {
-	Models    []Model
-	CachePath string
-	RemoteURL string
+	Models    []Model   `json:"models"`
+	CachePath string    `json:"cache_path,omitempty"`
+	RemoteURL string    `json:"remote_url,omitempty"`
+	Stale     bool      `json:"stale,omitempty"`
+	LoadedAt  time.Time `json:"loaded_at"`
 }
 
 // CredentialManager is the key/credential facet (config only).
@@ -192,17 +197,20 @@ type CredentialManager interface {
 // CredentialStatus reports whether a provider's credential is configured.
 type CredentialStatus struct {
 	Configured          bool   `json:"configured"`
+	ProviderID          string `json:"provider_id,omitempty"`
 	EnvironmentVariable string `json:"environment_variable,omitempty"`
 	EnvironmentConflict bool   `json:"environment_conflict,omitempty"`
+	Verified            bool   `json:"verified,omitempty"`
 	Masked              string `json:"masked,omitempty"`
 	EnvVar              string `json:"env_var,omitempty"`
 }
 
 // CredentialResolution is the result of validating a pasted API key.
 type CredentialResolution struct {
-	FormatOK        bool   `json:"format_ok"`
-	FormatError     string `json:"format_error,omitempty"`
-	Providers       []CredentialProviderOption
+	FormatOK                bool   `json:"format_ok"`
+	FormatError             string `json:"format_error,omitempty"`
+	Providers               []CredentialProviderOption
+	ProbeDisambiguationUsed bool `json:"probe_disambiguation_used,omitempty"`
 }
 
 // CredentialProviderOption is one provider row in the key picker.
@@ -236,9 +244,9 @@ type Selection struct {
 
 // SelectionOptions controls effective-selection resolution.
 type SelectionOptions struct {
-	ProviderOverride           string
-	ModelOverride              string
-	DeploymentRoutingOverride  *bool
+	ProviderOverride          string
+	ModelOverride             string
+	DeploymentRoutingOverride *bool
 }
 
 // GatewayInspector is the gateway/deployment facet (config only).
@@ -257,20 +265,20 @@ type GatewayInspector interface {
 
 // Gateway is a provider/gateway descriptor.
 type Gateway struct {
-	ID                      string `json:"id"`
-	DisplayName             string `json:"display_name"`
-	DeploymentID            string `json:"deployment_id,omitempty"`
-	CredentialEnv           string `json:"credential_env"`
-	RequiresKey             bool   `json:"requires_key"`
-	SortOrder               int    `json:"sort_order"`
-	ChatPreference          int    `json:"chat_preference"`
-	SupportsLiveDiscovery   bool   `json:"supports_live_discovery"`
-	CredentialConfigured    bool   `json:"credential_configured"`
-	DeploymentConfigured    bool   `json:"deployment_configured"`
-	ModelCount              int    `json:"model_count"`
-	RegionLabel             string `json:"region_label,omitempty"`
-	RegionRequired          bool   `json:"region_required"`
-	Active                  bool   `json:"active"`
+	ID                    string `json:"id"`
+	DisplayName           string `json:"display_name"`
+	DeploymentID          string `json:"deployment_id,omitempty"`
+	CredentialEnv         string `json:"credential_env"`
+	RequiresKey           bool   `json:"requires_key"`
+	SortOrder             int    `json:"sort_order"`
+	ChatPreference        int    `json:"chat_preference"`
+	SupportsLiveDiscovery bool   `json:"supports_live_discovery"`
+	CredentialConfigured  bool   `json:"credential_configured"`
+	DeploymentConfigured  bool   `json:"deployment_configured"`
+	ModelCount            int    `json:"model_count"`
+	RegionLabel           string `json:"region_label,omitempty"`
+	RegionRequired        bool   `json:"region_required"`
+	Active                bool   `json:"active"`
 }
 
 // DeploymentSummary summarizes deployment routing for a model.
@@ -315,8 +323,8 @@ type PreflightOptions struct {
 
 // PreflightReport is the result of a preflight check.
 type PreflightReport struct {
-	Ready   bool           `json:"ready"`
-	Checks  []PreflightCheck `json:"checks"`
+	Ready  bool             `json:"ready"`
+	Checks []PreflightCheck `json:"checks"`
 }
 
 // PreflightCheck is one readiness check.
