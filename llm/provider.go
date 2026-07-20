@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"time"
 )
 
 // Provider is hawk's hawk-owned view of the provider engine: a composition of
@@ -42,6 +43,16 @@ type GenerateRequest struct {
 	Options      GenerationOptions
 }
 
+// Intent expresses a host's semantic preference without naming a provider.
+type Intent string
+
+const (
+	IntentFast       Intent = "fast"
+	IntentBalanced   Intent = "balanced"
+	IntentReasoning  Intent = "reasoning"
+	IntentEconomical Intent = "economical"
+)
+
 // Requirements declare what the request needs from the engine.
 type Requirements struct {
 	Streaming      bool
@@ -49,24 +60,32 @@ type Requirements struct {
 	Vision         bool
 	StructuredJSON bool
 	Reasoning      bool
+	MinimumContext int `json:"minimum_context,omitempty"`
 }
 
 // Preference declares the preferred provider/model.
 type Preference struct {
-	PreferredProvider string
-	PreferredModelID  string
+	Intent            Intent  `json:"intent,omitempty"`
+	PreferredProvider string  `json:"-"`
+	PreferredModelID  string  `json:"preferred_model_id,omitempty"`
+	AllowFallback     bool    `json:"allow_fallback,omitempty"`
+	MaximumCostUSD    float64 `json:"maximum_cost_usd,omitempty"`
 }
 
 // Limits declares output limits.
 type Limits struct {
-	MaxOutputTokens      int
-	MaxContinuations     int
-	MaxTotalOutputTokens int
+	MaxOutputTokens      int           `json:"max_output_tokens,omitempty"`
+	MaxContinuations     int           `json:"max_continuations,omitempty"`
+	MaxTotalOutputTokens int           `json:"max_total_output_tokens,omitempty"`
+	Timeout              time.Duration `json:"timeout,omitempty"`
 }
 
 // Metadata carries request-scoped metadata.
 type Metadata struct {
-	UserID string
+	SessionID string `json:"session_id,omitempty"`
+	TurnID    string `json:"turn_id,omitempty"`
+	UserID    string `json:"user_id,omitempty"`
+	ProjectID string `json:"project_id,omitempty"`
 }
 
 // GenerationOptions holds provider-specific generation knobs.
@@ -77,6 +96,12 @@ type GenerationOptions struct {
 	ThinkingMode         string
 	ThinkingDisplay      string
 	ThinkingEnabled      *bool
+	// GLMThinkingEnabled toggles GLM/Z.ai extended reasoning via the provider's
+	// non-OpenAI thinking={"type":"enabled"|"disabled"} request parameter. Only
+	// applied for OpenAI-compatible providers whose compat config sets
+	// ThinkingFormat to "zai". When nil the parameter is omitted and the model
+	// uses its default (GLM defaults to enabled).
+	GLMThinkingEnabled   *bool
 	VirtualKeyID         string
 	KimiContextCacheID   string
 	KimiCacheResetTTL    bool
@@ -135,13 +160,13 @@ type Model struct {
 	LiveMetadata     json.RawMessage `json:"live_metadata,omitempty"`
 }
 
-// ModelClass is the cost tier of a model.
-type ModelClass int
+// ModelClass is a provider-neutral relative model cost/capability band.
+type ModelClass string
 
 const (
-	ModelClassEconomical ModelClass = iota
-	ModelClassBalanced
-	ModelClassPremium
+	ModelClassEconomical ModelClass = "economical"
+	ModelClassBalanced   ModelClass = "balanced"
+	ModelClassPremium    ModelClass = "premium"
 )
 
 // CatalogSnapshot is a point-in-time view of the model catalog.

@@ -175,6 +175,7 @@ type EyrieStreamEvent struct {
 	ToolCall   *ToolCall      `json:"tool_call,omitempty"`
 	Thinking   string         `json:"thinking,omitempty"`
 	Error      string         `json:"error,omitempty"`
+	Warning    string         `json:"warning,omitempty"`
 	RequestID  string         `json:"request_id,omitempty"`
 	Usage      *EyrieUsage    `json:"usage,omitempty"`
 	StopReason string         `json:"stop_reason,omitempty"`
