@@ -26,6 +26,7 @@ go get github.com/GrayCodeAI/hawk-core-contracts
 | `verify/` | `Report`, `Finding` | Neutral verification findings, stats, and report contracts |
 | `sessions/` | `Phase`, `CostAccumulator`, `ParsePhase` | Cross-repo agent session state types |
 | `agent/` | `SpawnRequest`, `SpawnResult`, hook event names | Typed subagent spawn + hook vocabulary |
+| `llm/` | `Provider` + roles, `EyrieMessage`, `EyrieResponse`, `ChatOptions`, `StreamEvent`, `StreamResult`, `Model`, `Usage`, … | Canonical provider port contract — the hawk↔eyrie boundary |
 
 ## Architecture
 
@@ -38,7 +39,8 @@ hawk-core-contracts (stdlib only)
 ├── review/    Result, Finding, Comment — review result contracts
 ├── verify/    Report, Finding — verification report contracts
 ├── sessions/  Phase, CostAccumulator — session state contracts
-└── agent/     SpawnRequest, SpawnResult, hook events — subagent spawn contracts
+├── agent/     SpawnRequest, SpawnResult, hook events — subagent spawn contracts
+└── llm/       Provider + 7 roles, conversation DTOs — the hawk↔eyrie port contract
 ```
 
 ## Scope
