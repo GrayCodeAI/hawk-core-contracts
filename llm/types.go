@@ -58,7 +58,7 @@ type ToolResult struct {
 }
 
 // Tool is a tool definition.
-type Tool struct {
+type EyrieTool struct {
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
 	Parameters  map[string]interface{} `json:"parameters"`
@@ -84,7 +84,7 @@ type ChatOptions struct {
 	Temperature          *float64          `json:"temperature,omitempty"`
 	MaxTokens            int               `json:"max_tokens,omitempty"`
 	Stream               bool              `json:"stream,omitempty"`
-	Tools                []Tool            `json:"tools,omitempty"`
+	Tools                []EyrieTool        `json:"tools,omitempty"`
 	System               string            `json:"system,omitempty"`
 	EnableCaching        bool              `json:"enable_caching,omitempty"`
 	ResponseFormat       *ResponseFormat   `json:"response_format,omitempty"`
@@ -125,7 +125,7 @@ type ContinuationConfig struct {
 }
 
 // Usage tracks token usage.
-type Usage struct {
+type EyrieUsage struct {
 	PromptTokens        int `json:"prompt_tokens"`
 	CompletionTokens    int `json:"completion_tokens"`
 	TotalTokens         int `json:"total_tokens"`
@@ -142,10 +142,10 @@ type ResolvedRoute struct {
 }
 
 // Response is the chat response DTO.
-type Response struct {
+type EyrieResponse struct {
 	Content        string         `json:"content"`
 	Thinking       string         `json:"thinking,omitempty"`
-	Usage          *Usage         `json:"usage,omitempty"`
+	Usage          *EyrieUsage    `json:"usage,omitempty"`
 	ToolCalls      []ToolCall     `json:"tool_calls,omitempty"`
 	FinishReason   string         `json:"finish_reason"`
 	RequestID      string         `json:"request_id,omitempty"`
@@ -153,15 +153,15 @@ type Response struct {
 	Route          *ResolvedRoute `json:"route,omitempty"`
 }
 
-// StreamEvent is a streaming event.
-type StreamEvent struct {
+// EyrieStreamEvent is a streaming event.
+type EyrieStreamEvent struct {
 	Type       string         `json:"type"`
 	Content    string         `json:"content,omitempty"`
 	ToolCall   *ToolCall      `json:"tool_call,omitempty"`
 	Thinking   string         `json:"thinking,omitempty"`
 	Error      string         `json:"error,omitempty"`
 	RequestID  string         `json:"request_id,omitempty"`
-	Usage      *Usage         `json:"usage,omitempty"`
+	Usage      *EyrieUsage    `json:"usage,omitempty"`
 	StopReason string         `json:"stop_reason,omitempty"`
 	TTFTms     int            `json:"ttft_ms,omitempty"`
 	TTFT       int            `json:"ttft,omitempty"`
@@ -171,14 +171,14 @@ type StreamEvent struct {
 // StreamResult wraps a streaming response with cleanup. Callers must call Close()
 // when done reading events, or cancel the context.
 type StreamResult struct {
-	Events    <-chan StreamEvent
+	Events    <-chan EyrieStreamEvent
 	RequestID string
 	cancel    context.CancelFunc
 }
 
 // NewStreamResult constructs a stream result. The cancel function is optional
 // and must be idempotent.
-func NewStreamResult(events <-chan StreamEvent, requestID string, cancel context.CancelFunc) *StreamResult {
+func NewStreamResult(events <-chan EyrieStreamEvent, requestID string, cancel context.CancelFunc) *StreamResult {
 	return &StreamResult{Events: events, RequestID: requestID, cancel: cancel}
 }
 

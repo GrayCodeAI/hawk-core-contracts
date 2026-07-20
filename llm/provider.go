@@ -24,7 +24,7 @@ type Provider interface {
 
 // Generator is the chat transport facet: the only part the ChatClient path uses.
 type Generator interface {
-	Generate(ctx context.Context, req GenerateRequest) (*Response, error)
+	Generate(ctx context.Context, req GenerateRequest) (*EyrieResponse, error)
 	Stream(ctx context.Context, req GenerateRequest) (*StreamResult, error)
 }
 
@@ -32,7 +32,7 @@ type Generator interface {
 type GenerateRequest struct {
 	Messages     []EyrieMessage
 	SystemPrompt string
-	Tools        []Tool
+	Tools        []EyrieTool
 	Requirements Requirements
 	Preference   Preference
 	Limits       Limits
