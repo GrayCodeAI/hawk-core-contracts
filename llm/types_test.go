@@ -8,26 +8,33 @@ import (
 )
 
 func TestToolCallAliasesToolsPackage(t *testing.T) {
-	// Ensure llm.ToolCall and tools.ToolCall are the same type (not merely similar).
-	call := tools.ToolCall{
+	// Ensure llm.ToolCall and tools.ToolCall are the same type (not merely similar):
+	// tools.ToolCall must be assignable to llm.ToolCall without conversion.
+	assertLLMToolCall(t, tools.ToolCall{
 		ID:   "t1",
 		Name: "read",
 		Arguments: map[string]interface{}{
 			"path": "main.go",
 		},
-	}
-	var asLLM ToolCall = call
-	if asLLM.ID != "t1" || asLLM.Name != "read" {
-		t.Fatalf("ToolCall alias lost fields: %+v", asLLM)
-	}
-	result := tools.ToolResult{
+	})
+	assertLLMToolResult(t, tools.ToolResult{
 		ToolUseID: "t1",
 		Content:   "ok",
 		IsError:   false,
+	})
+}
+
+func assertLLMToolCall(t *testing.T, call ToolCall) {
+	t.Helper()
+	if call.ID != "t1" || call.Name != "read" {
+		t.Fatalf("ToolCall alias lost fields: %+v", call)
 	}
-	var asLLMResult ToolResult = result
-	if asLLMResult.ToolUseID != "t1" || asLLMResult.Content != "ok" {
-		t.Fatalf("ToolResult alias lost fields: %+v", asLLMResult)
+}
+
+func assertLLMToolResult(t *testing.T, result ToolResult) {
+	t.Helper()
+	if result.ToolUseID != "t1" || result.Content != "ok" {
+		t.Fatalf("ToolResult alias lost fields: %+v", result)
 	}
 }
 
