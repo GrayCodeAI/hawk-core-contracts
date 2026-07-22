@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `VERSION` file now reports `0.1.7` (was left at `0.1.6` after the llm
+  package release; `version.go` embeds this file).
+- `llm.ToolCall` / `llm.ToolResult` are type aliases of `tools.ToolCall` /
+  `tools.ToolResult` so the ecosystem has one tool-call vocabulary.
+- Host-facing `llm` types aligned with the eyrie engine facade:
+  `CatalogHealth`, `DeploymentSummary`, `PreflightReport` (`LiveVerified`),
+  `ProviderStateSecurity`, and pull-based `EventStreamer` on `Generator.Stream`.
+- `proto/hawk/contracts/v1/llm.proto` mirrors llm conversation / host DTOs;
+  `make proto` regenerates agent + llm stubs under `gen/`.
+- Unit tests for `llm` (`StreamResult`, aliases, constants, `EventStreamer`).
+
 ## [0.1.7] — 2026-07-22
 
 ### Added
