@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] — 2026-07-22
+
 ### Fixed
 
-- `VERSION` file now reports `0.1.7` (was left at `0.1.6` after the llm
-  package release; `version.go` embeds this file).
+- `VERSION` file reports `0.1.8` (host-port alignment release).
 - `llm.ToolCall` / `llm.ToolResult` are type aliases of `tools.ToolCall` /
   `tools.ToolResult` so the ecosystem has one tool-call vocabulary.
 - Host-facing `llm` types aligned with the eyrie engine facade:
