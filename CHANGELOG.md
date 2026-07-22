@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] — 2026-07-22
+
+### Added
+
+- `llm/` package: shared LLM provider contract types (`provider.go`,
+  `types.go`) ported from the engine surface, consumable by downstream
+  repos (e.g. `eyrie`) without a local replace directive.
+
 ## [0.1.6] — 2026-07-16
 
 ### Added
