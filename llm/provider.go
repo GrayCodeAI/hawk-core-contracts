@@ -24,9 +24,22 @@ type Provider interface {
 }
 
 // Generator is the chat transport facet: the only part the ChatClient path uses.
+//
+// Stream returns a pull-based EventStreamer (the host engine facade contract).
+// Lower-level channel-based streaming still uses StreamResult on the client
+// transport layer; that type is intentionally not part of this host port.
 type Generator interface {
 	Generate(ctx context.Context, req GenerateRequest) (*EyrieResponse, error)
-	Stream(ctx context.Context, req GenerateRequest) (*StreamResult, error)
+	Stream(ctx context.Context, req GenerateRequest) (EventStreamer, error)
+}
+
+// EventStreamer is the pull-based host stream contract used by the engine facade.
+// Next must not be called concurrently. Close is idempotent.
+type EventStreamer interface {
+	Next() bool
+	Event() EyrieStreamEvent
+	Err() error
+	Close() error
 }
 
 // GenerateRequest is the normalized generation request.
@@ -281,12 +294,11 @@ type Gateway struct {
 	Active                bool   `json:"active"`
 }
 
-// DeploymentSummary summarizes deployment routing for a model.
+// DeploymentSummary summarizes deployment routing for a model (host-facing).
 type DeploymentSummary struct {
-	// mirrors eyrieengine.DeploymentSummary
-	ActiveModel string `json:"active_model"`
-	Status      string `json:"status"`
-	Router      string `json:"router,omitempty"`
+	RoutingSource string `json:"routing_source,omitempty"`
+	RoutingStages int    `json:"routing_stages,omitempty"`
+	Formatted     string `json:"formatted"`
 }
 
 // CatalogMaintenance is the refresh/preflight/security facet (config only).
@@ -302,12 +314,19 @@ type CatalogMaintenance interface {
 	MigrateProviderSecretsContext(ctx context.Context) error
 }
 
-// CatalogHealth reports the health of the model catalog.
+// CatalogHealth reports the health of the model catalog (host-facing).
 type CatalogHealth struct {
-	Healthy bool   `json:"healthy"`
-	Path    string `json:"path,omitempty"`
-	Models  int    `json:"models,omitempty"`
-	Error   string `json:"error,omitempty"`
+	Path        string    `json:"path"`
+	Exists      bool      `json:"exists"`
+	ModifiedAt  time.Time `json:"modified_at,omitempty"`
+	Size        int64     `json:"size,omitempty"`
+	Models      int       `json:"models,omitempty"`
+	Deployments int       `json:"deployments,omitempty"`
+	Offerings   int       `json:"offerings,omitempty"`
+	Stale       bool      `json:"stale,omitempty"`
+	StaleAfter  time.Time `json:"stale_after,omitempty"`
+	Source      string    `json:"source,omitempty"`
+	Error       string    `json:"error,omitempty"`
 }
 
 // StatePaths is the on-disk location of catalog + provider config.
@@ -318,35 +337,39 @@ type StatePaths struct {
 
 // PreflightOptions configures a preflight check.
 type PreflightOptions struct {
-	VerifyLive bool
+	VerifyLive bool `json:"verify_live,omitempty"`
 }
 
 // PreflightReport is the result of a preflight check.
 type PreflightReport struct {
-	Ready  bool             `json:"ready"`
-	Checks []PreflightCheck `json:"checks"`
+	Ready        bool             `json:"ready"`
+	LiveVerified bool             `json:"live_verified"`
+	Checks       []PreflightCheck `json:"checks"`
 }
 
-// PreflightCheck is one readiness check.
-type PreflightCheck struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-	Detail string `json:"detail,omitempty"`
-}
+// CheckStatus is a preflight check status string.
+type CheckStatus string
 
 // Common preflight check statuses.
 const (
-	CheckOK   = "ok"
-	CheckFail = "fail"
-	CheckWarn = "warn"
+	CheckOK   CheckStatus = "ok"
+	CheckFail CheckStatus = "fail"
+	CheckWarn CheckStatus = "warn"
 )
+
+// PreflightCheck is one readiness check.
+type PreflightCheck struct {
+	Name   string      `json:"name"`
+	Status CheckStatus `json:"status"`
+	Detail string      `json:"detail,omitempty"`
+}
 
 // ProviderStateSecurity reports security state of provider config.
 type ProviderStateSecurity struct {
-	PlatformStore string `json:"platform_store,omitempty"`
-	Sanitized     bool   `json:"sanitized"`
-	Detail        string `json:"detail,omitempty"`
-	Error         string `json:"error,omitempty"`
+	Path       string `json:"path"`
+	HasSecrets bool   `json:"has_secrets"`
+	Detail     string `json:"detail,omitempty"`
+	Error      string `json:"error,omitempty"`
 }
 
 // NativeCompactor is the provider-native-compaction facet.

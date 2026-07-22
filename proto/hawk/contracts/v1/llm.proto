@@ -1,0 +1,196 @@
+syntax = "proto3";
+
+package hawk.contracts.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "hawk/contracts/v1/tool.proto";
+
+option go_package = "github.com/GrayCodeAI/hawk-core-contracts/gen/go/hawk/contracts/v1;contractsv1";
+
+// Conversation and host-port DTOs for the hawk↔eyrie boundary.
+// Hand-written Go source of truth: llm/types.go and llm/provider.go.
+// ToolCall/ToolResult intentionally reuse the canonical messages in tool.proto
+// (llm.ToolCall is a Go type alias of tools.ToolCall).
+
+// ContentPart mirrors llm.ContentPart — a provider-neutral multimodal part.
+message ContentPart {
+  string type = 1;
+  string text = 2;
+  ImageURLPart image_url = 3;
+  InputAudioPart input_audio = 4;
+}
+
+// ImageURLPart mirrors llm.ImageURLPart.
+message ImageURLPart {
+  string url = 1;
+  string detail = 2;
+}
+
+// InputAudioPart mirrors llm.InputAudioPart.
+message InputAudioPart {
+  string data = 1;
+  string format = 2;
+}
+
+// EyrieMessage mirrors llm.EyrieMessage — the conversation message shape.
+// tool_use / tool_results reuse ToolCall / ToolResult from tool.proto.
+message EyrieMessage {
+  string role = 1;
+  string content = 2;
+  string thinking = 3;
+  repeated ContentPart content_parts = 4;
+  repeated string images = 5;
+  repeated ToolCall tool_use = 6;
+  repeated ToolResult tool_results = 7;
+}
+
+// EyrieTool mirrors llm.EyrieTool — a model-visible tool definition.
+message EyrieTool {
+  string name = 1;
+  string description = 2;
+  google.protobuf.Struct parameters = 3;
+}
+
+// ResponseFormat mirrors llm.ResponseFormat.
+message ResponseFormat {
+  string type = 1;
+  string schema = 2;
+}
+
+// ToolChoiceOption mirrors llm.ToolChoiceOption.
+message ToolChoiceOption {
+  string type = 1;
+  string name = 2;
+  bool disable_parallel_tool_use = 3;
+}
+
+// EyrieUsage mirrors llm.EyrieUsage — normalized token accounting.
+message EyrieUsage {
+  int32 prompt_tokens = 1;
+  int32 completion_tokens = 2;
+  int32 total_tokens = 3;
+  int32 cache_creation_tokens = 4;
+  int32 cache_read_tokens = 5;
+  int32 thinking_tokens = 6;
+}
+
+// ResolvedRoute mirrors llm.ResolvedRoute — concrete provider/model route.
+message ResolvedRoute {
+  string provider = 1;
+  string model = 2;
+  bool deployment_routing = 3;
+}
+
+// EyrieResponse mirrors llm.EyrieResponse — blocking chat response DTO.
+message EyrieResponse {
+  string content = 1;
+  string thinking = 2;
+  EyrieUsage usage = 3;
+  repeated ToolCall tool_calls = 4;
+  string finish_reason = 5;
+  string request_id = 6;
+  string organization_id = 7;
+  ResolvedRoute route = 8;
+}
+
+// EyrieStreamEvent mirrors llm.EyrieStreamEvent — one stream event.
+// TTFT and TTFTms both carry milliseconds; producers may set either field
+// (see Go comments on llm.EyrieStreamEvent).
+message EyrieStreamEvent {
+  string type = 1;
+  string content = 2;
+  ToolCall tool_call = 3;
+  string thinking = 4;
+  string error = 5;
+  string warning = 6;
+  string request_id = 7;
+  EyrieUsage usage = 8;
+  string stop_reason = 9;
+  int32 ttft_ms = 10;
+  int32 ttft = 11;
+  ResolvedRoute route = 12;
+}
+
+// Model mirrors llm.Model — product-facing catalog row.
+message Model {
+  string id = 1;
+  string provider_id = 2;
+  string canonical_id = 3;
+  string display_name = 4;
+  string description = 5;
+  string owner = 6;
+  string gateway_id = 7;
+  int32 context_window = 8;
+  int32 max_output_tokens = 9;
+  double input_price_per_1m = 10;
+  double output_price_per_1m = 11;
+  bool price_known = 12;
+  repeated string capabilities = 13;
+  string source = 14;
+  bytes live_metadata = 15;
+}
+
+// CatalogSnapshot mirrors llm.CatalogSnapshot.
+message CatalogSnapshot {
+  repeated Model models = 1;
+  string cache_path = 2;
+  string remote_url = 3;
+  bool stale = 4;
+  google.protobuf.Timestamp loaded_at = 5;
+}
+
+// CredentialStatus mirrors llm.CredentialStatus (never contains secrets).
+message CredentialStatus {
+  bool configured = 1;
+  string provider_id = 2;
+  string environment_variable = 3;
+  bool environment_conflict = 4;
+  bool verified = 5;
+  string masked = 6;
+  string env_var = 7;
+}
+
+// CatalogHealth mirrors llm.CatalogHealth.
+message CatalogHealth {
+  string path = 1;
+  bool exists = 2;
+  google.protobuf.Timestamp modified_at = 3;
+  int64 size = 4;
+  int32 models = 5;
+  int32 deployments = 6;
+  int32 offerings = 7;
+  bool stale = 8;
+  google.protobuf.Timestamp stale_after = 9;
+  string source = 10;
+  string error = 11;
+}
+
+// DeploymentSummary mirrors llm.DeploymentSummary.
+message DeploymentSummary {
+  string routing_source = 1;
+  int32 routing_stages = 2;
+  string formatted = 3;
+}
+
+// PreflightReport mirrors llm.PreflightReport.
+message PreflightReport {
+  bool ready = 1;
+  bool live_verified = 2;
+  repeated PreflightCheck checks = 3;
+}
+
+// PreflightCheck mirrors llm.PreflightCheck.
+message PreflightCheck {
+  string name = 1;
+  string status = 2;
+  string detail = 3;
+}
+
+// ProviderStateSecurity mirrors llm.ProviderStateSecurity.
+message ProviderStateSecurity {
+  string path = 1;
+  bool has_secrets = 2;
+  string detail = 3;
+  string error = 4;
+}

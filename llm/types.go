@@ -10,7 +10,11 @@
 // never appear here.
 package llm
 
-import "context"
+import (
+	"context"
+
+	"github.com/GrayCodeAI/hawk-core-contracts/tools"
+)
 
 // EyrieConfig holds client configuration.
 type EyrieConfig struct {
@@ -52,19 +56,12 @@ type EyrieMessage struct {
 	ToolResults  []ToolResult  `json:"tool_results,omitempty"`
 }
 
-// ToolCall is a tool invocation.
-type ToolCall struct {
-	ID        string                 `json:"id,omitempty"`
-	Name      string                 `json:"name"`
-	Arguments map[string]interface{} `json:"arguments"`
-}
+// ToolCall is a tool invocation. Aliased to tools.ToolCall so the ecosystem
+// has a single ToolCall/ToolResult vocabulary (see tools/tool.go).
+type ToolCall = tools.ToolCall
 
-// ToolResult is a tool execution result.
-type ToolResult struct {
-	ToolUseID string `json:"tool_use_id"`
-	Content   string `json:"content"`
-	IsError   bool   `json:"is_error,omitempty"`
-}
+// ToolResult is a tool execution result. Aliased to tools.ToolResult.
+type ToolResult = tools.ToolResult
 
 // EyrieTool is a tool definition.
 type EyrieTool struct {

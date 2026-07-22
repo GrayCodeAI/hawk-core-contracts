@@ -26,7 +26,7 @@ go get github.com/GrayCodeAI/hawk-core-contracts
 | `verify/` | `Report`, `Finding` | Neutral verification findings, stats, and report contracts |
 | `sessions/` | `Phase`, `CostAccumulator`, `ParsePhase` | Cross-repo agent session state types |
 | `agent/` | `SpawnRequest`, `SpawnResult`, hook event names | Typed subagent spawn + hook vocabulary |
-| `llm/` | `Provider` + roles, `EyrieMessage`, `EyrieResponse`, `ChatOptions`, `StreamEvent`, `StreamResult`, `Model`, `Usage`, … | Canonical provider port contract — the hawk↔eyrie boundary |
+| `llm/` | `Provider` + roles, `EventStreamer`, `EyrieMessage`, `EyrieResponse`, `ChatOptions`, `EyrieStreamEvent`, `StreamResult`, `Model`, `Usage`, … | Canonical provider port contract — the hawk↔eyrie boundary (`ToolCall`/`ToolResult` alias `tools/`) |
 
 ## Architecture
 
@@ -40,8 +40,14 @@ hawk-core-contracts (stdlib only)
 ├── verify/    Report, Finding — verification report contracts
 ├── sessions/  Phase, CostAccumulator — session state contracts
 ├── agent/     SpawnRequest, SpawnResult, hook events — subagent spawn contracts
-└── llm/       Provider + 7 roles, conversation DTOs — the hawk↔eyrie port contract
+└── llm/       Provider + 7 roles, EventStreamer, conversation DTOs — hawk↔eyrie port
 ```
+
+`llm.ToolCall` / `llm.ToolResult` are type aliases of `tools.ToolCall` /
+`tools.ToolResult` (single vocabulary). Host streaming on the port is
+pull-based (`EventStreamer`); channel-based `StreamResult` remains for
+lower-level client transports.
+
 
 ## Scope
 
@@ -64,8 +70,9 @@ hawk-core-contracts (stdlib only)
 - anything that belongs in a single consuming repo
 
 Engines should depend on this repo only when they produce or consume a shared
-cross-repo contract. Contract-free engines (e.g., `eyrie`, `yaad`, `trace`)
-should not add the dependency just for consistency.
+cross-repo contract. Eyrie depends on `llm/` for the host port; other engines
+(e.g. `yaad`, `trace`) stay contract-free unless they share a real cross-repo
+type.
 
 If a type is only used inside one repo, it should stay in that repo.
 
@@ -186,6 +193,8 @@ numeric values identical to the Go `iota` constants that
 | `/review/` | `@GrayCodeAI/llm-team` |
 | `/verify/` | `@GrayCodeAI/llm-team` |
 | `/sessions/` | `@GrayCodeAI/llm-team` |
+| `/agent/` | `@GrayCodeAI/llm-team` |
+| `/llm/` | `@GrayCodeAI/llm-team` |
 | `/proto/` | `@GrayCodeAI/llm-team` |
 | `/VERSION` | `@GrayCodeAI/maintainers` |
 | `/Makefile` | `@GrayCodeAI/devops-team` |
