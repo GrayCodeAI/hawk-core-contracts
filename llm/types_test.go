@@ -9,23 +9,25 @@ import (
 
 func TestToolCallAliasesToolsPackage(t *testing.T) {
 	// Ensure llm.ToolCall and tools.ToolCall are the same type (not merely similar).
-	var call ToolCall = tools.ToolCall{
+	call := tools.ToolCall{
 		ID:   "t1",
 		Name: "read",
 		Arguments: map[string]interface{}{
 			"path": "main.go",
 		},
 	}
-	if call.ID != "t1" || call.Name != "read" {
-		t.Fatalf("ToolCall alias lost fields: %+v", call)
+	var asLLM ToolCall = call
+	if asLLM.ID != "t1" || asLLM.Name != "read" {
+		t.Fatalf("ToolCall alias lost fields: %+v", asLLM)
 	}
-	var result ToolResult = tools.ToolResult{
+	result := tools.ToolResult{
 		ToolUseID: "t1",
 		Content:   "ok",
 		IsError:   false,
 	}
-	if result.ToolUseID != "t1" || result.Content != "ok" {
-		t.Fatalf("ToolResult alias lost fields: %+v", result)
+	var asLLMResult ToolResult = result
+	if asLLMResult.ToolUseID != "t1" || asLLMResult.Content != "ok" {
+		t.Fatalf("ToolResult alias lost fields: %+v", asLLMResult)
 	}
 }
 
